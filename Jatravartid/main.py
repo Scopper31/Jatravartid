@@ -10,7 +10,7 @@ import re
 import pip
 
 
-API_KEY = ""
+API_KEY = "AIzaSyB-o46jLBbVAmdl--6OJq6WEHRsDQJlUH0"
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -67,8 +67,8 @@ def solve_task(task):
         technical assignment : {analysis_response.text}
         Conduct a technical analysis of this task.
         Write a technical assignment for the programmers.
-        Break this technical assignment into 4 parts for 4 parts for 4 developers.
-        Divide the tasks of each of the 4 programmers into blocks, use the word "BLOCK" for each block.
+        Break this technical assignment into 4 parts for 4 parts for 4 python developers.
+        Divide the tasks of each of the 4 programmers into blocks, use the word "BLOCK" for start of each block.
         Describe all the principles of the program, libraries and algorithms.
     """
 
@@ -78,8 +78,10 @@ def solve_task(task):
 
     tasks = teamlead_response.text.split("BLOCK")[1:]
 
+
+    #python developers
     programmers_responses = []
-    programmers_code = []
+    #programmers_code = []
     for problem in tasks:
         programmer_prompt = f"""
             You are a senior developer.
@@ -92,33 +94,33 @@ def solve_task(task):
         programmer_response.resolve()
 
         programmers_responses.append(programmer_response.text)
-        programmers_code.append(programmer_response.text.split("`python")[1].split("```")[0])
+        #programmers_code.append(programmer_response.text.split("`python")[1].split("```")[0])
         print(programmer_response.text.split("`python")[1].split("```")[0])
 
     programmers_responses_as_string = '\n'.join(programmers_responses)
-    programmers_code_as_string = '\n'.join(programmers_code)
+    #programmers_code_as_string = '\n'.join(programmers_code)
     devops_prompt = f"""
         You are a senior devops.
         technical assignment : {analysis_response.text}
         distribution of tasks : {teamlead_response.text}
         programmers responses: {programmers_responses_as_string}
-        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment
+        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment, look for possible mistakes and fix them
         And the distribution of tasks will help you figure it out.
         
         Finally, create a list of the names of the packages used in the code. Before output, use the code word "PACKAGES" as a separator there will be spaces
     """
     devops_response = model.generate_content(devops_prompt, stream=True)
     devops_response.resolve()
-    final_result = devops_response.text.split("`python")[1].split("```")[0]
+    answer = devops_response.text.split("`python")[1].split("```")[0]
     packages_list = devops_response.text.split("PACKAGES")[1].split(' ')
     #import_list_of_packages(packages_list)
-    return final_result
+    return answer
 
 
 task = input("Введите задачу: ")
-result = solve_task(task)
-result = f"#{task}\n{result}"
-file_work(result)
+final_result = solve_task(task)
+final_result = f"#{task}\n{final_result}"
+file_work(final_result)
 
 print("FINITA")
 
