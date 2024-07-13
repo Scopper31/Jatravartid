@@ -1,0 +1,127 @@
+#pip install google-generativeai
+
+import os
+import time
+import google.generativeai as genai
+# from google.generativeai import caching
+import io
+import datetime
+import re
+import pip
+
+
+API_KEY = ""
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+
+def import_list_of_packages(packages):
+    for package in packages:
+        pip.main(['install', package])
+
+
+def evolution_of_development(a, b):
+    return '\n'.join([a, b])
+
+
+def file_work(result):
+    try:
+        with open("number.txt", "r") as file_with_number:
+            content = file_with_number.read()
+            test_path = f"tests\\script{content}.py"
+            number = int(content)
+            if content.strip():
+                number += 1
+                with open("number.txt", 'w') as file:
+                    file.write(str(number))
+            else:
+                #print(f"В файле number.txt не найдено ни одного числа.")
+                with open("number.txt", 'w') as file:
+                    file.write("0")
+    except FileNotFoundError:
+        #print(f"Файл не найден, произошла ошибка.")
+        with open("number.txt", 'w') as file:
+            file.write("0")
+
+
+    with open(test_path, "w") as file:
+        file.write(result)
+
+def solve_task(task):
+    #technical writer
+
+    analysis_prompt = f"""
+        You are a professional technical writer of the big comprehensive project.
+        Task: {task}
+        Conduct a technical analysis of this task.
+        Write a technical assignment for the programmer.
+        Describe all the principles of the program, libraries and algorithms.
+    """
+    analysis_response = model.generate_content(analysis_prompt, stream=True)
+    analysis_response.resolve()
+    print(analysis_response.text)
+    #development = evolution_of_development(development, response.text)
+
+    teamlead_prompt = f"""
+        You are a senior teamlead.
+        technical assignment : {analysis_response.text}
+        Conduct a technical analysis of this task.
+        Write a technical assignment for the programmers.
+        Break this technical assignment into 4 parts for 4 parts for 4 developers.
+        Divide the tasks of each of the 4 programmers into blocks, use the word "BLOCK" for each block.
+        Describe all the principles of the program, libraries and algorithms.
+    """
+
+    teamlead_response = model.generate_content(teamlead_prompt, stream=True)
+    teamlead_response.resolve()
+    print(teamlead_response.text)
+
+    tasks = teamlead_response.text.split("BLOCK")[1:]
+
+    programmers_responses = []
+    programmers_code = []
+    for problem in tasks:
+        programmer_prompt = f"""
+            You are a senior developer.
+            Your problem will do its job in the best possible way.
+            Write your code in python
+            Leave brief comments when writing code.
+            Your problem: {problem}
+        """
+        programmer_response = model.generate_content(programmer_prompt, stream=True)
+        programmer_response.resolve()
+
+        programmers_responses.append(programmer_response.text)
+        programmers_code.append(programmer_response.text.split("`python")[1].split("```")[0])
+        print(programmer_response.text.split("`python")[1].split("```")[0])
+
+    programmers_responses_as_string = '\n'.join(programmers_responses)
+    programmers_code_as_string = '\n'.join(programmers_code)
+    devops_prompt = f"""
+        You are a senior devops.
+        technical assignment : {analysis_response.text}
+        distribution of tasks : {teamlead_response.text}
+        programmers responses: {programmers_responses_as_string}
+        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment
+        And the distribution of tasks will help you figure it out.
+        
+        Finally, create a list of the names of the packages used in the code. Before output, use the code word "PACKAGES" as a separator there will be spaces
+    """
+    devops_response = model.generate_content(devops_prompt, stream=True)
+    devops_response.resolve()
+    final_result = devops_response.text.split("`python")[1].split("```")[0]
+    packages_list = devops_response.text.split("PACKAGES")[1].split(' ')
+    #import_list_of_packages(packages_list)
+    return final_result
+
+
+task = input("Введите задачу: ")
+result = solve_task(task)
+result = f"#{task}\n{result}"
+file_work(result)
+
+print("FINITA")
+
+
+#TESTS
+#Напиши приложение архиватор с графическим интерфейсом на языке python. Алгоритм архивации реализуй самостоятельно
