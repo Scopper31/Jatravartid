@@ -12,7 +12,7 @@ import ast
 import traceback
 
 # gemini конфигурация
-API_KEY = "AIzaSyBX_MHojPIwPOhheCYHEmrx-wNpQ6uvN_U"
+API_KEY = ""
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
