@@ -22,7 +22,6 @@ def import_list_of_packages(packages):
         pip.main(['install', package])
 
 
-
 def evolution_of_development(a, b):
     return '\nA piece of code:\n'.join([a, b])
 
@@ -103,12 +102,13 @@ def solve_task(task_):
     number_of_prog = 4
 
     teamlead_prompt = f"""
-        You are a senior teamlead.
+        You are a senior teamlead. 
+        You are expert at selecting and choosing the best tools, and doing your utmost to avoid unnecessary duplication and complexity.
         technical assignment : {analysis_response.text}
         Conduct a technical analysis of this task.
         Write a technical assignment for the programmers.
         Describe all the principles of the program, libraries and algorithms.
-        Break this technical assignment into {number_of_prog} parts for {number_of_prog} parts for {number_of_prog} python developers.
+        Break this technical assignment into {number_of_prog} parts for {number_of_prog} equal in volume work parts for {number_of_prog} python developers.
         Divide the tasks of each of the {number_of_prog} programmers into blocks, use the word "BLOCK_START" for start and "BLOCK_END" for end of each block.
         Distribute tasks so that everyone does something.
     """
@@ -120,46 +120,60 @@ def solve_task(task_):
     add_to_log("Teamlead", teamlead_response.text)
 
     tasks = extract_blocks(teamlead_response.text, "BLOCK_START", "BLOCK_END")
-
     # python developers
     programmers_responses = []
     programmers_code = []
     for count, task_ in enumerate(tasks):
         if count == 0:
             programmer_prompt = f"""
-                You are a senior developer.
+                You are a senior python developer.
+                You are expert at selecting and choosing the best tools, and doing your utmost to avoid unnecessary duplication and complexity.
+                When making a suggestion, you break things down in to discrete changes, and suggest a small test after each stage to make sure things are on the right track.
                 Your problem will do its job in the best possible way.
-                Write your code in python
-                Leave brief comments when writing code.
+                Write your code in python.
+                The code should be output in the python code block.
                 Your problem: {task_}
 
                 Don't write any code except final version of your part.
-                Use the word "CODE_START" for start and "CODE_END" for end of the final version of code
+                Finish writing the code to the end.
+                Use code word "#CODE_START" for indication beginning and "#CODE_END" for ending of the final version of code
+                Example:
+                
+                #CODE_START - note in the begining of code
+                code ...
+                #CODE_END - note in the end of code 
             """
         else:
             programmer_prompt = f"""
-                You are a senior developer.
+                You are a senior python developer.
+                You are expert at selecting and choosing the best tools, and doing your utmost to avoid unnecessary duplication and complexity.
+                When making a suggestion, you break things down in to discrete changes, and suggest a small test after each stage to make sure things are on the right track.
                 Your problem will do its job in the best possible way.
                 Write your code in python
-                Leave brief comments when writing code.
-                You're doing part of a big project. Do your task according to the code already written by other programmers
-                The code already written before you: {development}
-                Your problem: {task_}
+                The code should be output in the python code block
                 
+                You're doing part of a big project. Do your task according to the code already written by other programmers
+                The code already written before you: {development}. Do not repeat the code you have already written, but continue as it were.
+                Your problem: {task_}
+
                 Don't write any code except final version of your part.
-                Use the word "CODE_START" for start and "CODE_END" for end of the final version of code
+                Finish writing the code to the end.
+                Use code "#CODE_START" for indication beginning and "#CODE_END" for ending of the final version of your part of code
+                Example:
+                #CODE_START - note in the beginning of code
+                code ...
+                #CODE_END - note in the end of code 
             """
 
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
+        time.sleep(4)
+        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         print(programmer_response.text)
         add_to_log("Programmer", programmer_response.text)
-        block_of_python = extract_blocks(programmer_response.text, "CODE_START", "CODE_END")[0]
-        add_to_log("blocks", block_of_python)
-        print(block_of_python)
-        code_of_programmer = extract_blocks(block_of_python, "```python", "```")
-        add_to_log("code", block_of_python)
-        print(code_of_programmer)
+
+        code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
+        add_to_log("code", code_of_programmer)
         check = test_mistakes(code_of_programmer)
 
         while check is not None:
@@ -168,19 +182,27 @@ def solve_task(task_):
                 Your problem will do its job in the best possible way.
                 Write your code in python
                 Leave brief comments when writing code.
-                You're doing part of a big project. Do your task according to the code already written by other programmers
+                The code should be output in the python code block.
+                You're doing part of a big project.
+                
                 Your problem: {task_}
                 Your previous code: {code_of_programmer}
                 Your traceback: {check}
 
                 Fix the code according to the error log.
                 Don't write any python code except the corrected version of your part.
-                Use the word "CODE_START" for start and "CODE_END" for end of the corrected version of code
+                Use code "#CODE_START" for indication beginning and "#CODE_END" for ending of the corrected version of your part of code
+                Example:
+                
+                #CODE_START - note in the beginning of code
+                code ...
+                #CODE_END - note in the end of code 
             """
             programmer_response = model.generate_content(programmer_debug_prompt, stream=True)
             programmer_response.resolve()
-            code_of_programmer = extract_blocks(extract_blocks(programmer_response.text, "CODE_START", "CODE_END")[0], "`python", "```")[0]
+            code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
             check = test_mistakes(code_of_programmer)
+            print("FFFFFFF")
 
         development = evolution_of_development(development, code_of_programmer)
 
@@ -195,25 +217,40 @@ def solve_task(task_):
     # programmers_code_as_string = '\n'.join(programmers_code)
     devops_prompt = f"""
         You are a senior devops.
+        You are expert at selecting and choosing the best tools, and doing your utmost to avoid unnecessary duplication and complexity.
+        When making a suggestion, you break things down in to discrete changes, and suggest a small test after each stage to make sure things are on the right track.
         technical assignment : {analysis_response.text}
         distribution of tasks : {teamlead_response.text}
         programmers responses: {programmers_responses_as_string}
-        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment, look for possible mistakes and fix them.
+        The code should be output in the python code block.
+        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment, look for possible mistakes, defections, losses of code and fix them.
+        If necessary, add everything you need.
         And the distribution of tasks will help you figure it out.
-        Don't forget to connect all the libraries you use
-        Divide the project into files in the best possible way, do not forget to link them.
-        Come up with a name for each file and don't forget to set their extension. Use the word "NAME_START" for start and "NAME_END" for end of each name. the main file should be called "main.py"
-        Use the word "FILE_START" for start and "FILE_END" for end of each file. 
+        Don't forget to connect all the libraries you use.
         
+        Divide the project into files in the best possible way, do not forget to link files together with importation.
+        Perform all the necessary code manipulations that are needed to link the file into one project
+        
+        Come up with a name for each file and don't forget to set their extension. Before the code use the word "NAME_START" for indication beginning and "NAME_END" for ending of each name. the main file should be called "main.py", write it before the code of the file
+        Use code word "#FILE_START" for indication beginning and "#FILE_END" for ending of each file. 
+        Example:
+        
+        NAME_START game.py NAME_END
+        
+        #FILE_START - note in the beginning of code
+        code ...
+        #FILE_END - note in the end of code
+        
+
         Finally, create a list of the names of the packages used in the code. Before output, use the code word "#PACKAGES" as a separator there will be spaces. Write code word and list in one string. leave this string at the end of the main file.
     """
     devops_response = model.generate_content(devops_prompt, stream=True)
     devops_response.resolve()
 
-    codes = [extract_blocks(block, "`python", "```")[0] for block in extract_blocks(devops_response.text, "FILE_START", "FILE_END")]
+    codes = extract_blocks(devops_response.text, "#FILE_START", "#FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
 
-    #devops_debug_prompt_without_traceback = f"""
+    # devops_debug_prompt_without_traceback = f"""
     #         You are a senior devops.
     #         technical assignment : {analysis_response.text}
     #         distribution of tasks : {teamlead_response.text}
@@ -254,7 +291,6 @@ def solve_task(task_):
 
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_name}", f"{name}", code)
-
 
 
 task = input("Введите задачу: ")
