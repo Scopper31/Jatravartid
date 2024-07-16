@@ -12,7 +12,7 @@ import ast
 import traceback
 
 # gemini конфигурация
-API_KEY = ""
+API_KEY = "AIzaSyDDc_34aQhK3sikAgQJqXsvxyRmGsxKdfQ"
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -48,7 +48,8 @@ def create_file(path_to_folder, name, code):
 
 # под вопросом. тк возможно создание двух одинаковый файлов или переполнение длинны названия (221 символ)
 def generate_alias(task_):
-    alias_response = model.generate_content(f"output alias for task: {task_}. output only alias literally in few words", stream=True)  # Generate alias from task
+    alias_response = model.generate_content(f"output alias for task: {task_}. output only alias literally in few words",
+                                            stream=True)  # Generate alias from task
     alias_response.resolve()
     return '_'.join(alias_response.text.split())
 
@@ -117,7 +118,7 @@ def solve_task(task_):
             Write your code in python
             Leave brief comments when writing code.
             Your problem: {task_}
-            
+
             Don't write code except final version.
         """
 
@@ -136,7 +137,7 @@ def solve_task(task_):
                 Your problem: {task_}
                 Your previous code: {code_of_programmer}
                 Your traceback: {check}
-                
+
                 Fix the code according to the error log.
                 Don't write any more python code except the corrected version.
             """
@@ -150,18 +151,19 @@ def solve_task(task_):
         print(programmer_response.text)
 
         add_to_log("Programmer", programmer_response.text)
-
+    # сказать нейросети где какой прогер
     programmers_responses_as_string = '\n'.join(programmers_responses)
-    #programmers_code_as_string = '\n'.join(programmers_code)
+    # programmers_code_as_string = '\n'.join(programmers_code)
     devops_prompt = f"""
         You are a senior devops.
         technical assignment : {analysis_response.text}
         distribution of tasks : {teamlead_response.text}
         programmers responses: {programmers_responses_as_string}
-        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment, look for possible mistakes and fix them
+        Assemble all the code written by programmers into one full-fledged, working project, according to the technical assignment, look for possible mistakes and fix them.
         And the distribution of tasks will help you figure it out.
+        Don't forget to connect all the libraries you use
         Don't write code except final version.
-        
+
         Finally, create a list of the names of the packages used in the code. Before output, use the code word "#PACKAGES" as a separator there will be spaces. Write code word and list in one string
     """
     devops_response = model.generate_content(devops_prompt, stream=True)
@@ -170,9 +172,9 @@ def solve_task(task_):
 
     check = test_mistakes(answer)
 
-    #надеюсь тут возникнут проблемы тк тогда это будет значить, что ошибки не только синтаксические и для их починки потребуется доступ к файлам и картинкам
+    # надеюсь тут возникнут проблемы тк тогда это будет значить, что ошибки не только синтаксические и для их починки потребуется доступ к файлам и картинкам
     while check is not None:
-        programmer_debug_prompt = f"""
+        devops_debug_prompt = f"""
             You are a senior devops.
             technical assignment : {analysis_response.text}
             distribution of tasks : {teamlead_response.text}
@@ -182,17 +184,16 @@ def solve_task(task_):
 
             Fix the code according to the error log.
             As an answer write only the corrected version of code
-            
-            #Если для решения ошибки потребуется работа с системой то для написания комманд в терминале используй кодовое слово "COMMAND" тут мб потребуется пошаговая система
         """
-        devops_response = model.generate_content(programmer_debug_prompt, stream=True)
+        # Если для решения ошибки потребуется работа с системой то для написания комманд в терминале используй кодовое слово "COMMAND" тут мб потребуется пошаговая система
+        devops_response = model.generate_content(devops_debug_prompt, stream=True)
         devops_response.resolve()
         answer = devops_response.text.split("`python")[-1].split("```")[0]
         check = test_mistakes(answer)
+        print(check)
 
-
-    #packages_list = devops_response.text.split("PACKAGES")[1].split(' ')
-    #import_list_of_packages(packages_list)
+    # packages_list = devops_response.text.split("PACKAGES")[1].split(' ')
+    # import_list_of_packages(packages_list)
     print(devops_response.text)
 
     add_to_log("Devops", devops_response.text)
@@ -200,7 +201,7 @@ def solve_task(task_):
 
 
 task = input("Введите задачу: ")
-alias = generate_alias(task) #название папки, в которую все сохранится
+alias = generate_alias(task)  # название папки, в которую все сохранится
 file_work(task, alias)
 
 final_code = solve_task(task)
@@ -210,7 +211,6 @@ create_file(f"tests/{alias}", "script", final_code)
 
 print("FINITA")
 
-
-#TESTS
-#Напиши приложение архиватор с графическим интерфейсом на языке python. Алгоритм архивации реализуй самостоятельно
+# TESTS
+# Напиши приложение архиватор с графическим интерфейсом на языке python. Алгоритм архивации реализуй самостоятельно
 # task = "write me a classic game of life in pygame"
