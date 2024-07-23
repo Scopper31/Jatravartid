@@ -175,6 +175,7 @@ def extract_blocks(text, block_start, block_end):
     return extracted_texts
 
 
+
 def run_pylint_with_ultimate_flags(files_to_lint):
     pylint_output = io.StringIO()  # Custom open stream for pylint output
     reporter = TextReporter(pylint_output)
