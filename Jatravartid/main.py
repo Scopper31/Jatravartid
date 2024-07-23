@@ -10,6 +10,9 @@ import re
 import pip
 import ast
 import traceback
+import pylint
+from pylint.lint import Run
+from pylint.reporters.text import TextReporter
 
 # gemini конфигурация
 API_KEY = "AIzaSyDDc_34aQhK3sikAgQJqXsvxyRmGsxKdfQ"
@@ -116,7 +119,7 @@ def multyfile_test_mistakes_with_gpt(code_string):
     **Your Goal:**
 
     Your goal is to find as many errors as possible, including but not limited to:
-    
+
     **Connection Errors:** The error lies in the incorrect linking of files. (We need to get rid of the mutual connection of files. And make a working set of files.)
     **Syntax Errors:** Missing parentheses, commas, incorrect indentation, invalid keywords, typos, misplaced operators, etc.
     **Runtime Errors:** Errors that occur during code execution (e.g., division by zero, accessing non-existent variables, incorrect indexing, type mismatches, etc.)
@@ -170,6 +173,22 @@ def extract_blocks(text, block_start, block_end):
         extracted_texts.append(text[start + len(block_start):end].strip())
 
     return extracted_texts
+
+
+def run_pylint_with_ultimate_flags(files_to_lint):
+    pylint_output = io.StringIO()  # Custom open stream for pylint output
+    reporter = TextReporter(pylint_output)
+
+    # Define your ultimate set of flags here!
+    # For example, to enable all checks except for line-too-long:
+    pylint_arguments = [
+                           "--disable=all",
+                           "--enable=similarities,classes,design,exceptions,format,imports,logging,method_args,miscellaneous,refactoring,spelling,string,typecheck,variables,broad_try_clause,code_style,deprecated_builtins,dunder,magic-value,parameter_documentation,typing",
+                           "--disable=line-too-long"  # Example: disable line-too-long check
+                       ] + files_to_lint
+
+    Run(pylint_arguments, reporter=reporter, exit=False)
+    return pylint_output.getvalue()
 
 
 def develop(task_, folder_name_):
@@ -564,7 +583,7 @@ def solve_task(task_):
     - **Ensure Compatibility:** Ensure your corrections are compatible with the existing code, maintaining the functionality and integrity of the project. 
     - **Test Thoroughly:**  Thoroughly test your corrected code to ensure the error is resolved and the project works as expected.
     - **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
-    make snake game but portals of different color appear over time that snake can teleport through- **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main.py` file so that the project runs seamlessly.** 
+    - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main.py` file so that the project runs seamlessly.** 
     In case of an error in the connection of the program files, rearrange everything so that it leads to correct operation
     **Output:**
 
@@ -614,6 +633,10 @@ def solve_task(task_):
 
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_name}", f"{name}", code)
+
+    # After creating all files, run pylint:
+    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_name}/{name}" for name in names])
+    print(pylint_results)
 
 
 ask = int(input("Новый проект: 1, Ввести коррекцию в старый 2: "))
