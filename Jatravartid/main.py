@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # pip install google-generativeai
 import os
 import time
@@ -9,7 +10,6 @@ import re
 import pip
 import ast
 import traceback
-
 
 # gemini конфигурация
 API_KEY = "AIzaSyDDc_34aQhK3sikAgQJqXsvxyRmGsxKdfQ"
@@ -28,11 +28,11 @@ def evolution_of_development(a, b):
 
 
 # создание папки с проектом и объявление лога
-def file_work(task_, folder_name):
+def file_work(task_, folder_name_):
     try:
-        os.makedirs(f"tests/{folder_name}", exist_ok=True)  # Create folder in "tests"
+        os.makedirs(f"tests/{folder_name_}", exist_ok=True)  # Create folder in "tests"
 
-        with open(f"tests/{folder_name}/log.txt", "a") as log_file:
+        with open(f"tests/{folder_name_}/log.txt", "a") as log_file:
             log_file.write(f"\n--- {datetime.datetime.now()} ---\n")
             log_file.write(f"Task: {task_}\n")
             log_file.write("=" * 50 + "\n\n")
@@ -47,8 +47,9 @@ def create_file(path_to_folder, name, code):
 
 # под вопросом. тк возможно создание двух одинаковый файлов или переполнение длинны названия (221 символ)
 def generate_alias(task_):
-    alias_response = model.generate_content(f"output alias for task, that will be the name of folder with the project: {task_}. output only alias literally in few words without wrapping in \"**\"",
-                                            stream=True)  # Generate alias from task
+    alias_response = model.generate_content(
+        f"output alias for task, that will be the name of folder with the project: {task_}. output only alias literally in few words without wrapping in \"**\"",
+        stream=True)  # Generate alias from task
     alias_response.resolve()
     return '_'.join(alias_response.text.split())
 
@@ -56,15 +57,15 @@ def generate_alias(task_):
 def test_mistakes_with_gpt(code_string):
     debug_prompt = f"""
         You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following Python code snippet and identifying all potential errors. 
-        
+
         **Code**
-        
+
         ```python
         {code_string}
         ```
-        
+
         Your goal is to find as many errors as possible, including but not limited to:
-        
+
         * Syntax Errors:  Missing parentheses, commas, incorrect indentation, invalid keywords, typos, misplaced operators, etc.
         * Runtime Errors: Errors that occur during code execution (e.g., division by zero, accessing non-existent variables, incorrect indexing, type mismatches, etc.)
         * Logical Errors:  Incorrect logic that leads to unexpected results, infinite loops, unintended side effects, incorrect variable usage, etc.
@@ -75,14 +76,14 @@ def test_mistakes_with_gpt(code_string):
             - Lack of proper input validation
             - Race conditions in multi-threaded scenarios
             - Unnecessary complexity or inefficient algorithms 
-        
+
         For each error you identify, provide a detailed explanation, including:
-        
+
         1. Line Number:  The specific line where the error occurs.
         2. Error Type: A concise description of the error (e.g., SyntaxError, TypeError, ValueError, Logical Error, Style Violation, Potential Bug, etc.).
         3. Explanation:  A clear and detailed description of why the error occurs. Provide context and reasoning, and explain how the error could impact the code's functionality or security.
         4. Suggested Fix:  Provide a specific recommendation on how to fix the error and ensure the code behaves correctly, securely, and efficiently.
-        
+
         markers of beginning and ending of something are a mandatory part of the code
         "```python" , "```" are a mandatory part of the code
     """
@@ -103,19 +104,20 @@ def multyfile_test_mistakes_with_gpt(code_string):
     ```python
     file1_code
     ```
-    
+
     **File 2: file2_name.py**
-    
+
     ```python
     file1_code
     ```
 
     ... (Additional files if needed) ...
-    
+
     **Your Goal:**
-    
+
     Your goal is to find as many errors as possible, including but not limited to:
     
+    **Connection Errors:** The error lies in the incorrect linking of files. (We need to get rid of the mutual connection of files. And make a working set of files.)
     **Syntax Errors:** Missing parentheses, commas, incorrect indentation, invalid keywords, typos, misplaced operators, etc.
     **Runtime Errors:** Errors that occur during code execution (e.g., division by zero, accessing non-existent variables, incorrect indexing, type mismatches, etc.)
     **Logical Errors:** Incorrect logic that leads to unexpected results, infinite loops, unintended side effects, incorrect variable usage, etc.
@@ -127,21 +129,21 @@ def multyfile_test_mistakes_with_gpt(code_string):
         - Race conditions in multi-threaded scenarios
         - Unnecessary complexity or inefficient algorithms
     **Code Connectivity Issues:** Identify any problems with how files are imported or referenced, leading to missing modules, undefined variables, or incorrect function calls across files.
-    
+
     **For each error you identify, provide a detailed explanation, including:**
-    
+
     **File Name:** The name of the file where the error occurs.
     **Line Number:** The specific line where the error occurs.
     **Error Type:** A concise description of the error (e.g., SyntaxError, TypeError, ValueError, Logical Error, Style Violation, Potential Bug, Import Error, etc.).
     **Explanation:** A clear and detailed description of why the error occurs. Provide context and reasoning, and explain how the error could impact the code's functionality or security.
     **Suggested Fix:** Provide a specific recommendation on how to fix the error and ensure the code behaves correctly, securely, and efficiently.
-    
-    
+
+
     markers of beginning and ending of something are a mandatory part of the code
     "```python" , "```" are a mandatory part of the code
-    
+
     **Example:**
-    
+
     File: my_module.py
     Error on line 10: NameError: name 'my_variable' is not defined
     Explanation: The variable my_variable is used in this file, but it's not defined within this file or imported from another file.
@@ -227,15 +229,17 @@ def develop(task_, folder_name_):
     names = extract_blocks(response.text, "NAME_START", "NAME_END")
 
     try:
-        with open(f"tests/{folder_name_}number.txt", "r") as file:
+        with open(f"tests/{folder_name_}/number.txt", "r") as file:
             number = int(file.read())
         number += 1
-        with open(f"tests/{folder_name_}number.txt", "w") as file:
+        with open(f"tests/{folder_name_}/number.txt", "w") as file:
             file.write(str(number))
+
     except FileNotFoundError:
         with open(f"tests/{folder_name_}number.txt", "w") as file:
             file.write("0")
             number = 0
+    os.makedirs(f"tests/{folder_name_}/correction{number}", exist_ok=True)
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_name_}/correction{number}", f"{name}", code)
     time.sleep(20)
@@ -246,11 +250,11 @@ def solve_task(task_):
 
     analysis_prompt = f"""
         You are a highly skilled technical writer, tasked with crafting a comprehensive technical assignment for a large, complex project. Your goal is to provide clear and detailed instructions for the programmer, ensuring they understand the project's requirements and can successfully implement the solution.
-        
+
         **Task:** {task_}
-        
+
         **Technical Assignment:**
-        
+
         1. **Project Overview:**
             - Provide a concise and clear explanation of the overall project goal.
             - Define the scope of the task and its role within the larger project. 
@@ -267,9 +271,9 @@ def solve_task(task_):
             - Outline the testing procedures and criteria for evaluating the program's success.
             - Define any specific test cases or scenarios that should be considered.
             - Specify the expected output or results for each test case. 
-        
+
         **Note:**
-        
+
         - Focus on clarity, conciseness, and completeness. Use technical terms and jargon appropriately for the intended audience.
         - Provide sufficient detail and examples to guide the programmer effectively.
         - Ensure that the assignment is well-structured and easy to follow.
@@ -285,34 +289,34 @@ def solve_task(task_):
 
     teamlead_prompt = f"""
         You are a highly skilled and experienced team lead, known for your expertise in efficient task allocation and code optimization. You prioritize clarity, avoiding unnecessary duplication and complexity.
-    
+
         **Technical Assignment:** 
         {analysis_response.text}
-    
+
         **Your Task:**
-    
+
         1. **Break Down the Assignment:** Carefully divide the technical assignment into {number_of_prog} distinct, equal-sized parts for {number_of_prog} Python developers. Each part should be well-defined and contribute meaningfully to the overall project. 
         2. **Allocate Tasks:** Distribute the {number_of_prog} parts to the developers, ensuring a balanced workload and avoiding overlapping responsibilities.
         3. **Code Organization:** For each programmer's tasks, divide the work into logical blocks, clearly separated by the markers "BLOCK_START" and "BLOCK_END". This will ensure clarity and simplify code integration later.
-    
+
         **Additional Considerations:**
-    
+
         - **Libraries & Frameworks:**  If specific libraries or frameworks are needed, recommend them to the programmers.
         - **Algorithm Choices:** If the task requires algorithms, suggest suitable ones and explain why they are appropriate.
         - **Code Style:**  Encourage programmers to write clean, readable code that adheres to PEP 8 style guidelines.
-    
+
         **Example:**
-    
+
         Programmer 1:
         BLOCK_START
         ... (technical specification for Programmer 1) ...
         BLOCK_END
-    
+
         Programmer 2:
         BLOCK_START
         ... (technical specification for Programmer 2) ...
         BLOCK_END
-    
+
         ... and so on for each programmer ...
     """
 
@@ -377,28 +381,28 @@ def solve_task(task_):
             ```python
             {development}
             ```
-            
+
             **Guidelines:**
-            
+
             - **Seamless Integration:** Ensure your code seamlessly integrates with the existing code, avoiding unnecessary duplication and complexity.
             - **Choose the Right Tools:** Select the most appropriate libraries and frameworks for the task, considering their strengths and suitability within the project.
             - **Modular Design:** Break down your code into well-defined functions, classes, or modules to improve readability and maintainability, ensuring consistent code style and structure.
             - **Iterative Development:** Implement your solution in a structured and iterative manner. Suggest small, testable steps that can be verified along the way to ensure smooth progress and avoid errors.
             - **Clear Explanations:** Include detailed comments explaining the logic behind your code, particularly when building upon existing code, making it easier to understand and maintain.
             - **Error Handling:** Implement robust error handling mechanisms to gracefully handle unexpected situations or user input.
-            
+
             **Output:**
-            
+
             - **Code Format:** Use a standard Python code block to present your solution.
             - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code.
-            
+
             **Final Code Structure:**
-            
+
             - Begin your code with the marker #CODE_START
             - End your code with the marker #CODE_END
-            
+
             **Example:**
-            
+
             ```python
             #CODE_START
             ... (code) ...
@@ -409,13 +413,14 @@ def solve_task(task_):
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
         time.sleep(10)
-        print("=============================================================================================================================================")
+        print(
+            "=============================================================================================================================================")
         print(programmer_response.text)
         add_to_log("Programmer", programmer_response.text)
 
         code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
 
-        #Перепроверка
+        # Перепроверка
         errors = test_mistakes_with_gpt(programmer_response.text)
         add_to_log("debug", errors)
         print(errors)
@@ -424,11 +429,11 @@ def solve_task(task_):
             You are a highly skilled and experienced senior Python developer, known for your ability to identify and fix bugs quickly and efficiently. You're a master of debugging and have a keen eye for detail. 
 
             **Your Task:**  You've been asked to review and fix the following Python code, which has some errors:
-            
+
             ```python
             {code_of_programmer}
             ```
-            
+
             **What the code does:**
             {task_}
 
@@ -439,20 +444,20 @@ def solve_task(task_):
             - **Analyze the Errors:** Carefully study the error messages provided. Understand the cause of each error and its potential impact on the code's functionality.
             - **Apply Fixes:** Implement precise and efficient fixes to correct the errors. Ensure that your changes address the root cause of the issue.
             - **Test Thoroughly:** After making corrections, test your code to confirm that the errors have been resolved and that the code functions as expected.
-            
+
             **Output:**
-            
+
             - **Code Format:** Use a standard Python code block to present your corrected code.
             - **Clear Comments:** Include comments to explain your fixes and any changes you've made to the original code.
-            
+
             **Final Code Structure:**
-            
+
             - Begin your code with the marker #CODE_START
             - End your code with the marker #CODE_END
             markers are a mandatory part of the code
             "```python" , "```" are a mandatory part of the code
             **Example:**
-            
+
             ```python
             #CODE_START
             ... (corrected code) ...
@@ -469,13 +474,13 @@ def solve_task(task_):
         programmers_responses.append(programmer_response.text)
         programmers_code.append(code_of_programmer)
 
-    #все, что написали программисты
+    # все, что написали программисты
     programmers_responses_as_string = '\n\n'.join(
         f"Programmer {i + 1}: \n{response}"
         for i, response in enumerate(programmers_responses)
     )
 
-    #DEVOPS
+    # DEVOPS
     devops_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in assembling complex projects from individual code contributions, ensuring seamless integration and functionality. You prioritize clarity, efficiency, and maintainability in your work.
 
@@ -504,19 +509,19 @@ def solve_task(task_):
     markers are a mandatory part of the code
 
     **Example:**
-    
+
     NAME_START game.py NAME_END
-    
+
     ```python
     #FILE_START
     ... code for game.py ...
     #FILE_END
     ```
-    
+
     ... other files ...
 
     NAME_START main.py NAME_END
-    
+
     ```python
     #FILE_START
     ... code for main.py ...
@@ -535,7 +540,7 @@ def solve_task(task_):
     add_to_log("Devops", devops_response.text)
 
     files_as_string = '\n\n'.join(
-        f"<{name}>:\n{code}"
+        f"**{name}**:\n{code}"
         for name, code in zip(names, codes)
     )
 
@@ -560,28 +565,28 @@ def solve_task(task_):
     - **Test Thoroughly:**  Thoroughly test your corrected code to ensure the error is resolved and the project works as expected.
     - **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
     make snake game but portals of different color appear over time that snake can teleport through- **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main.py` file so that the project runs seamlessly.** 
-     
+    In case of an error in the connection of the program files, rearrange everything so that it leads to correct operation
     **Output:**
 
     - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `#FILE_START` and `#FILE_END` to wrap each file's code.
     - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end. 
     markers are a mandatory part of the code
     "```python" , "```" are a mandatory part of the code
-    
+
     **Example:**
-    
+
     NAME_START game.py NAME_END
-    
+
     ```python
     #FILE_START
     ... (corrected code for game.py) ...
     #FILE_END
     ```
-    
+
     ... other files ...
 
     NAME_START main.py NAME_END
-    
+
     ```python
     #FILE_START
     ... (corrected code for main.py) ...
@@ -598,7 +603,6 @@ def solve_task(task_):
     codes = extract_blocks(devops_response.text, "#FILE_START", "#FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
 
-
     # packages_list = devops_response.text.split("PACKAGES")[1].split(' ')
     # import_list_of_packages(packages_list)
 
@@ -608,6 +612,7 @@ def solve_task(task_):
 
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_name}", f"{name}", code)
+
 
 ask = int(input("Новый проект: 1, Ввести коррекцию в старый 2: "))
 if ask == 1:
@@ -625,7 +630,6 @@ else:
     while 1:
         task = input("Правка: ")
         develop(task, folder_name)
-
 
 # TESTS
 # Напиши приложение архиватор с графическим интерфейсом на языке python. Алгоритм архивации реализуй самостоятельно
