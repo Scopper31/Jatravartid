@@ -610,6 +610,8 @@ def solve_task(task_):
     create_file(f"tests/{folder_name}", "project_in_string_format.txt", devops_response.text)
     add_to_log("Devops debuged", devops_response.text)
 
+    create_file(f"tests/{folder_name}", "__init__.py", devops_response.text)
+
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_name}", f"{name}", code)
 
