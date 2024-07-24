@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 # pip install google-generativeai
-from utils.string_utilities import *
-from utils.system_utilities import *
+
+from utilities.string_utilities import *
+from utilities.system_utilities import *
 from correction import *
 from project_debug import *
-from config import folder_name
+from config import folder_obj
+
 
 def solve_task(task_):
     # technical writer
@@ -366,14 +368,14 @@ def solve_task(task_):
     # import_list_of_packages(packages_list)
 
     print(devops_response.text)
-    create_file(f"tests/{folder_name}", "project_in_string_format.txt", devops_response.text)
+    create_file(f"tests/{folder_obj.folder_name}", "project_in_string_format.txt", devops_response.text)
     add_to_log("Devops debuged", devops_response.text)
 
-    create_file(f"tests/{folder_name}", "__init__.py", devops_response.text)
+    create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
 
     for name, code in zip(names, codes):
-        create_file(f"tests/{folder_name}", f"{name}", code)
+        create_file(f"tests/{folder_obj.folder_name}", f"{name}", code)
 
     # After creating all files, run pylint:
-    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_name}/{name}" for name in names])
+    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
     print(pylint_results)

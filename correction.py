@@ -1,8 +1,11 @@
 import os
 import time
-from config import model, folder_name
-from utils.string_utilities import extract_blocks
-from utils.system_utilities import create_file
+from config import model, folder_obj
+from utilities.string_utilities import extract_blocks
+from utilities.system_utilities import create_file
+
+
+folder_name = folder_obj.folder_name
 
 
 def develop(task):
