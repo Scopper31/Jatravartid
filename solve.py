@@ -244,6 +244,15 @@ def solve_task(task_):
             ... (corrected code) ...
             #CODE_END
             ```
+            
+            OR
+            
+            ```html
+            #CODE_START
+            ... (corrected code) ...
+            #CODE_END
+            ```
+            
         """
         programmer_response = model.generate_content(
             programmer_debug_prompt, stream=True
@@ -427,10 +436,9 @@ def solve_task(task_):
     )
 
     sis_admin_prompt = f""" 
-        {packages_list} весь проект
-        {files_as_string} всё что написал девопс
-        {folder_obj.folder_name} просто название
-        типо сделать красивое расположение файлов
+        {packages_list}
+        {files_as_string}
+        {folder_obj.folder_name}
     """
 
     # import_list_of_packages(packages_list)

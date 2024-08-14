@@ -34,6 +34,11 @@ def file_work(task):
     try:
         os.makedirs(f"tests/{folder_obj.folder_name}", exist_ok=True)  # Create folder in "tests"
 
+        with open(f"tests/{folder_obj.folder_name}/debug.txt", "a") as log_file:
+            log_file.write(f"\n--- {datetime.datetime.now()} ---\n")
+            log_file.write(f"Task: {task}\n")
+            log_file.write("=" * 50 + "\n\n")
+
         with open(f"tests/{folder_obj.folder_name}/log.txt", "a") as log_file:
             log_file.write(f"\n--- {datetime.datetime.now()} ---\n")
             log_file.write(f"Task: {task}\n")
@@ -50,3 +55,8 @@ def create_file(path_to_folder, name, code):
 def add_to_log(worker_type, response):
     with open(f"tests/{folder_obj.folder_name}/log.txt", "a") as log_file:
         log_file.write(f"{worker_type}:\n{response}\n")
+
+
+def add_to_debug(worker_type, response):
+    with open(f"tests/{folder_obj.folder_name}/debug.txt", "a") as debug_file:
+        debug_file.write(f"{worker_type}:\n{response}\n")
