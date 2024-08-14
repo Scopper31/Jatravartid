@@ -39,8 +39,12 @@ def solve_task(task_):
         - Provide sufficient detail and examples to guide the programmer effectively.
         - Ensure that the assignment is well-structured and easy to follow.
     """
-    analysis_response = model.generate_content(analysis_prompt, stream=True)
-    analysis_response.resolve()
+    try:
+        analysis_response = model.generate_content(analysis_prompt, stream=True)
+        analysis_response.resolve()
+    except Exception as e:
+        print(f"Error in generating or processing prompt: {e}")
+        add_to_log("solve_task-analysis", e)
     time.sleep(20)
     print(analysis_response.text)
 
@@ -80,9 +84,12 @@ def solve_task(task_):
 
         ... and so on for each programmer ...
     """
-
-    teamlead_response = model.generate_content(teamlead_prompt, stream=True)
-    teamlead_response.resolve()
+    try:
+        teamlead_response = model.generate_content(teamlead_prompt, stream=True)
+        teamlead_response.resolve()
+    except Exception as e:
+        print(f"Error in generating or processing prompt: {e}")
+        add_to_log("solve_task-teamlead", e)
     time.sleep(20)
     print(teamlead_response.text)
 
@@ -190,6 +197,7 @@ def solve_task(task_):
 
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
+
         time.sleep(10)
         print(
             "============================================================================================================================================="
