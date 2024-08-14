@@ -1,5 +1,5 @@
 from config import model
-from system_utilities import *
+from utilities.system_utilities import *
 
 
 def generate_alias(task):
