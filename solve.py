@@ -1,273 +1,15 @@
 # -*- coding: utf-8 -*-
 # pip install google-generativeai
-import os
-import time
-import google.generativeai as genai
-# from google.generativeai import caching
-import io
-import datetime
-import re
-import pip
-import ast
-import traceback
-import pylint
-from pylint.lint import Run
-from pylint.reporters.text import TextReporter
 
-# gemini конфигурация
-API_KEY = "AIzaSyDDc_34aQhK3sikAgQJqXsvxyRmGsxKdfQ"
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
-
-
-# эту функцию надо вставлять в самое начало сгенерированного кода вместе с массивом packages
-def import_list_of_packages(packages):
-    for package in packages:
-        pip.main(['install', package])
-
-
-def evolution_of_development(a, b):
-    return '\nA piece of code:\n'.join([a, b])
-
-
-# создание папки с проектом и объявление лога
-def file_work(task_, folder_name_):
-    try:
-        os.makedirs(f"tests/{folder_name_}", exist_ok=True)  # Create folder in "tests"
-
-        with open(f"tests/{folder_name_}/log.txt", "a") as log_file:
-            log_file.write(f"\n--- {datetime.datetime.now()} ---\n")
-            log_file.write(f"Task: {task_}\n")
-            log_file.write("=" * 50 + "\n\n")
-    except FileNotFoundError:
-        print(f"Файл не найден, произошла ошибка.")
-
-
-def create_file(path_to_folder, name, code):
-    with open(f"{path_to_folder}/{name}", "w") as file:
-        file.write(code)
-
-
-# под вопросом. тк возможно создание двух одинаковый файлов или переполнение длинны названия (221 символ)
-def generate_alias(task_):
-    alias_response = model.generate_content(
-        f"output alias for task, that will be the name of folder with the project: {task_}. output only alias literally in few words without wrapping in \"**\"",
-        stream=True)  # Generate alias from task
-    alias_response.resolve()
-    return '_'.join(alias_response.text.split())
-
-
-def test_mistakes_with_gpt(code_string):
-    debug_prompt = f"""
-        You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following Python code snippet and identifying all potential errors. 
-
-        **Code**
-
-        ```python
-        {code_string}
-        ```
-
-        Your goal is to find as many errors as possible, including but not limited to:
-
-        * Syntax Errors:  Missing parentheses, commas, incorrect indentation, invalid keywords, typos, misplaced operators, etc.
-        * Runtime Errors: Errors that occur during code execution (e.g., division by zero, accessing non-existent variables, incorrect indexing, type mismatches, etc.)
-        * Logical Errors:  Incorrect logic that leads to unexpected results, infinite loops, unintended side effects, incorrect variable usage, etc.
-        * Style Violations: Code that doesn't adhere to PEP 8 style guidelines (e.g., inconsistent naming conventions, excessive line length, inappropriate spacing, etc.)
-        * Potential Bugs:  Flaws in the code that could lead to unexpected behavior, security vulnerabilities, or performance issues, including but not limited to:
-            - Incorrect handling of edge cases
-            - Unintentional data corruption
-            - Lack of proper input validation
-            - Race conditions in multi-threaded scenarios
-            - Unnecessary complexity or inefficient algorithms 
-
-        For each error you identify, provide a detailed explanation, including:
-
-        1. Line Number:  The specific line where the error occurs.
-        2. Error Type: A concise description of the error (e.g., SyntaxError, TypeError, ValueError, Logical Error, Style Violation, Potential Bug, etc.).
-        3. Explanation:  A clear and detailed description of why the error occurs. Provide context and reasoning, and explain how the error could impact the code's functionality or security.
-        4. Suggested Fix:  Provide a specific recommendation on how to fix the error and ensure the code behaves correctly, securely, and efficiently.
-
-        markers of beginning and ending of something are a mandatory part of the code
-        "```python" , "```" are a mandatory part of the code
-    """
-    debug_response = model.generate_content(debug_prompt, stream=True)
-    debug_response.resolve()
-    time.sleep(10)
-    return debug_response.text
-
-
-def multyfile_test_mistakes_with_gpt(code_string):
-    debug_prompt = f"""
-    You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following multi-file Python project and identifying all potential errors. 
-
-    **Project Structure:**
-
-    **File 1: file1_name.py**
-
-    ```python
-    file1_code
-    ```
-
-    **File 2: file2_name.py**
-
-    ```python
-    file1_code
-    ```
-
-    ... (Additional files if needed) ...
-
-    **Your Goal:**
-
-    Your goal is to find as many errors as possible, including but not limited to:
-
-    **Connection Errors:** The error lies in the incorrect linking of files. (We need to get rid of the mutual connection of files. And make a working set of files.)
-    **Syntax Errors:** Missing parentheses, commas, incorrect indentation, invalid keywords, typos, misplaced operators, etc.
-    **Runtime Errors:** Errors that occur during code execution (e.g., division by zero, accessing non-existent variables, incorrect indexing, type mismatches, etc.)
-    **Logical Errors:** Incorrect logic that leads to unexpected results, infinite loops, unintended side effects, incorrect variable usage, etc.
-    **Style Violations:** Code that doesn't adhere to PEP 8 style guidelines (e.g., inconsistent naming conventions, excessive line length, inappropriate spacing, etc.)
-    **Potential Bugs:** Flaws in the code that could lead to unexpected behavior, security vulnerabilities, or performance issues, including but not limited to:
-        - Incorrect handling of edge cases
-        - Unintentional data corruption
-        - Lack of proper input validation
-        - Race conditions in multi-threaded scenarios
-        - Unnecessary complexity or inefficient algorithms
-    **Code Connectivity Issues:** Identify any problems with how files are imported or referenced, leading to missing modules, undefined variables, or incorrect function calls across files.
-
-    **For each error you identify, provide a detailed explanation, including:**
-
-    **File Name:** The name of the file where the error occurs.
-    **Line Number:** The specific line where the error occurs.
-    **Error Type:** A concise description of the error (e.g., SyntaxError, TypeError, ValueError, Logical Error, Style Violation, Potential Bug, Import Error, etc.).
-    **Explanation:** A clear and detailed description of why the error occurs. Provide context and reasoning, and explain how the error could impact the code's functionality or security.
-    **Suggested Fix:** Provide a specific recommendation on how to fix the error and ensure the code behaves correctly, securely, and efficiently.
-
-
-    markers of beginning and ending of something are a mandatory part of the code
-    "```python" , "```" are a mandatory part of the code
-
-    **Example:**
-
-    File: my_module.py
-    Error on line 10: NameError: name 'my_variable' is not defined
-    Explanation: The variable my_variable is used in this file, but it's not defined within this file or imported from another file.
-    Suggested Fix: Either define my_variable in this file or import it from the file where it is defined.
-    Important: Be thorough in your analysis, and aim to find as many errors as possible. Explain your reasoning clearly and provide specific recommendations for fixes. Don't hesitate to identify potential bugs, even if they are not immediately apparent during a quick glance.
-    """
-    debug_response = model.generate_content(debug_prompt, stream=True)
-    debug_response.resolve()
-    time.sleep(20)
-    return debug_response.text
-
-
-def add_to_log(worker_type, response):
-    with open(f"tests/{folder_name}/log.txt", "a") as log_file:
-        log_file.write(f"{worker_type}:\n{response}\n")
-
-
-def extract_blocks(text, block_start, block_end):
-    block_starts = [m.start() for m in re.finditer(block_start, text)]
-    block_ends = [m.start() for m in re.finditer(block_end, text)]
-
-    extracted_texts = []
-    for start, end in zip(block_starts, block_ends):
-        extracted_texts.append(text[start + len(block_start):end].strip())
-
-    return extracted_texts
-
-
-
-def run_pylint_with_ultimate_flags(files_to_lint):
-    pylint_output = io.StringIO()  # Custom open stream for pylint output
-    reporter = TextReporter(pylint_output)
-
-    # Define your ultimate set of flags here!
-    # For example, to enable all checks except for line-too-long:
-    pylint_arguments = [
-                           "--disable=all",
-                           "--enable=similarities,classes,design,exceptions,format,imports,logging,method_args,miscellaneous,refactoring,spelling,string,typecheck,variables,broad_try_clause,code_style,deprecated_builtins,dunder,magic-value,parameter_documentation,typing",
-                           "--disable=line-too-long"  # Example: disable line-too-long check
-                       ] + files_to_lint
-
-    Run(pylint_arguments, reporter=reporter, exit=False)
-    return pylint_output.getvalue()
-
-
-def develop(task_, folder_name_):
-    with open(f"""tests/{folder_name_}/project_in_string_format.txt""") as file:
-        code = file.read()
-
-    prompt = f"""
-    Please help me fix the following Python project. I want to make the following changes:
-
-    {task_}
-
-    **Current project:**
-
-    ```python
-    {code}
-    ```
-
-    **Structure of multiple project visualisation:**
-        - **File Names:** The marker `NAME_START` indicates the beginning of the file name and `NAME_END` indicates the end.  
-        - **File Content:**  Each file's code is wrapped within the markers `#FILE_START` and `#FILE_END`.
-        - **Package List:**  `#PACKAGES` marker followed by the space-separated list of package names at the end of the main file (`main.py`).
-
-    **Output:**
-
-    - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `#FILE_START` and `#FILE_END` to wrap each file's code.
-    - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end. 
-    markers are a mandatory part of the code
-    "```python" , "```" are a mandatory part of the code
-
-    **Example:**
-
-    NAME_START game.py NAME_END
-
-    ```python
-    #FILE_START
-    ... (corrected code for game.py) ...
-    #FILE_END
-    ```
-
-    ... other files ...
-
-    NAME_START main.py NAME_END
-
-    ```python
-    #FILE_START
-    ... (corrected code for main.py) ...
-    #PACKAGES pygame random
-    #FILE_END
-    ```
-    """
-
-    response = model.generate_content(prompt, stream=True)
-    response.resolve()
-
-    print(response.text)
-    codes = extract_blocks(response.text, "#FILE_START", "#FILE_END")
-    names = extract_blocks(response.text, "NAME_START", "NAME_END")
-
-    try:
-        with open(f"tests/{folder_name_}/number.txt", "r") as file:
-            number = int(file.read())
-        number += 1
-        with open(f"tests/{folder_name_}/number.txt", "w") as file:
-            file.write(str(number))
-
-    except FileNotFoundError:
-        with open(f"tests/{folder_name_}number.txt", "w") as file:
-            file.write("0")
-            number = 0
-    os.makedirs(f"tests/{folder_name_}/correction{number}", exist_ok=True)
-    for name, code in zip(names, codes):
-        create_file(f"tests/{folder_name_}/correction{number}", f"{name}", code)
-    time.sleep(20)
+from utilities.string_utilities import *
+from utilities.system_utilities import *
+from correction import *
+from project_debug import *
+from config import folder_obj
 
 
 def solve_task(task_):
     # technical writer
-
     analysis_prompt = f"""
         You are a highly skilled technical writer, tasked with crafting a comprehensive technical assignment for a large, complex project. Your goal is to provide clear and detailed instructions for the programmer, ensuring they understand the project's requirements and can successfully implement the solution.
 
@@ -433,8 +175,7 @@ def solve_task(task_):
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
         time.sleep(10)
-        print(
-            "=============================================================================================================================================")
+        print("=============================================================================================================================================")
         print(programmer_response.text)
         add_to_log("Programmer", programmer_response.text)
 
@@ -627,36 +368,14 @@ def solve_task(task_):
     # import_list_of_packages(packages_list)
 
     print(devops_response.text)
-    create_file(f"tests/{folder_name}", "project_in_string_format.txt", devops_response.text)
+    create_file(f"tests/{folder_obj.folder_name}", "project_in_string_format.txt", devops_response.text)
     add_to_log("Devops debuged", devops_response.text)
 
-    create_file(f"tests/{folder_name}", "__init__.py", devops_response.text)
+    create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
 
     for name, code in zip(names, codes):
-        create_file(f"tests/{folder_name}", f"{name}", code)
+        create_file(f"tests/{folder_obj.folder_name}", f"{name}", code)
 
     # After creating all files, run pylint:
-    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_name}/{name}" for name in names])
+    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
     print(pylint_results)
-
-
-ask = int(input("Новый проект: 1, Ввести коррекцию в старый 2: "))
-if ask == 1:
-    task = input("Введите задачу: ")
-    folder_name = generate_alias(task)  # название папки, в которую все сохранится
-    file_work(task, folder_name)
-
-    solve_task(task)
-
-    print("FINITA")
-
-else:
-    folder_name = input("Название проекта: ")
-
-    while 1:
-        task = input("Правка: ")
-        develop(task, folder_name)
-
-# TESTS
-# Напиши приложение архиватор с графическим интерфейсом на языке python. Алгоритм архивации реализуй самостоятельно
-# task = "write me a classic game of life in pygame"
