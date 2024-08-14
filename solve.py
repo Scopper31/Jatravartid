@@ -3,7 +3,6 @@
 
 from utilities.string_utilities import *
 from utilities.system_utilities import *
-from correction import *
 from project_debug import *
 from config import folder_obj
 
@@ -47,7 +46,7 @@ def solve_task(task_):
 
     add_to_log("Analysis", analysis_response.text)
 
-    number_of_prog = 3
+    number_of_prog = 6
 
     teamlead_prompt = f"""
         You are a highly skilled and experienced team lead, known for your expertise in efficient task allocation and code optimization. You prioritize clarity, avoiding unnecessary duplication and complexity.
@@ -101,7 +100,7 @@ def solve_task(task_):
         if count == 0:
 
             programmer_prompt = f"""
-            You are a highly skilled and experienced senior Python developer, renowned for your ability to craft elegant and efficient solutions. You prioritize clarity, modularity, and maintainability in your code. 
+            You are a highly skilled and experienced senior multy-language developer, renowned for your ability to craft elegant and efficient solutions. You prioritize clarity, modularity, and maintainability in your code. 
 
             **Your Task:** {task_}
 
@@ -130,11 +129,20 @@ def solve_task(task_):
             ... (code) ...
             #CODE_END
             ```
+            
+            OR
+            
+            ```html
+            #CODE_START
+            ... (code) ...
+            #CODE_END
+            ```
+            
             """
 
         else:
             programmer_prompt = f"""
-            You are a highly skilled and experienced senior Python developer, known for your ability to craft elegant and efficient solutions within a larger project context. You prioritize clarity, modularity, and maintainability in your code, ensuring seamless integration with existing code. 
+            You are a highly skilled and experienced senior multy-language developer, known for your ability to craft elegant and efficient solutions within a larger project context. You prioritize clarity, modularity, and maintainability in your code, ensuring seamless integration with existing code. 
 
             **Your Task:** {task_}
 
@@ -170,6 +178,14 @@ def solve_task(task_):
             ... (code) ...
             #CODE_END
             ```
+            
+            OR
+            
+            ```html
+            #CODE_START
+            ... (code) ...
+            #CODE_END
+            ```
         """
 
         programmer_response = model.generate_content(programmer_prompt, stream=True)
@@ -187,11 +203,11 @@ def solve_task(task_):
         print(errors)
 
         programmer_debug_prompt = f"""
-            You are a highly skilled and experienced senior Python developer, known for your ability to identify and fix bugs quickly and efficiently. You're a master of debugging and have a keen eye for detail. 
+            You are a highly skilled and experienced senior multy-language developer, known for your ability to identify and fix bugs quickly and efficiently. You're a master of debugging and have a keen eye for detail. 
 
             **Your Task:**  You've been asked to review and fix the following Python code, which has some errors:
 
-            ```python
+            ```
             {code_of_programmer}
             ```
 
@@ -258,16 +274,17 @@ def solve_task(task_):
     3. **Library Management:** Ensure that all necessary libraries are included and properly connected within the project. 
     4. **File Organization:**  Divide the project into well-structured files with appropriate names and extensions.  
     5. **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
-        - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main.py` file so that the project runs seamlessly.** 
+        - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the file with name `main` so that the project runs seamlessly.** 
     6. **Project Completion:**  Create a complete and functional project, ready for testing and deployment.
-    7. **Package Listing:**  Provide a list of all the packages used in the project, separated by the marker `#PACKAGES`. Include this list at the end of the main file.
+    7. **Package Listing:**  At the end, provide a list of all the packages used in the project, wrapped within the markers `#PACKAGES_START` and `#PACKAGES_END`.
 
     **Output Structure:**
 
     - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end.  
     - **File Content:**  Wrap each file's code within the markers `#FILE_START` and `#FILE_END`.
-    - **Package List:**  Include the `#PACKAGES` marker followed by the space-separated list of package names at the end of the main file (`main.py`).
-    markers are a mandatory part of the code
+    - **Package List:**  Include the `#PACKAGES_START` and `#PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
+    
+    Markers are a mandatory part of the code
 
     **Example:**
 
@@ -278,6 +295,16 @@ def solve_task(task_):
     ... code for game.py ...
     #FILE_END
     ```
+    
+    
+    NAME_START index.html NAME_END
+    
+    ```html
+    #FILE_START
+    ... code for index.html ...
+    #FILE_END
+    ```
+    
 
     ... other files ...
 
@@ -286,9 +313,14 @@ def solve_task(task_):
     ```python
     #FILE_START
     ... code for main.py ...
-    #PACKAGES pygame random
+    
     #FILE_END
     ```
+    
+    #PACKAGES_START
+    pygame random etc...
+    #PACKAGES_END
+    
     """
 
     devops_response = model.generate_content(devops_prompt, stream=True)
@@ -325,14 +357,14 @@ def solve_task(task_):
     - **Ensure Compatibility:** Ensure your corrections are compatible with the existing code, maintaining the functionality and integrity of the project. 
     - **Test Thoroughly:**  Thoroughly test your corrected code to ensure the error is resolved and the project works as expected.
     - **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
-    - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main.py` file so that the project runs seamlessly.** 
+    - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main` file so that the project runs seamlessly.** 
     In case of an error in the connection of the program files, rearrange everything so that it leads to correct operation
     **Output:**
 
     - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `#FILE_START` and `#FILE_END` to wrap each file's code.
     - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end. 
     markers are a mandatory part of the code
-    "```python" , "```" are a mandatory part of the code
+    code blocks "```python" , "```" or "```html" , "```" etc...  are a mandatory part of the code
 
     **Example:**
 
@@ -343,7 +375,16 @@ def solve_task(task_):
     ... (corrected code for game.py) ...
     #FILE_END
     ```
-
+    
+    
+    NAME_START index.html NAME_END
+    
+    ```html
+    #FILE_START
+    ... (corrected code for index.html) ...
+    #FILE_END
+    ```
+    
     ... other files ...
 
     NAME_START main.py NAME_END
@@ -354,6 +395,10 @@ def solve_task(task_):
     #PACKAGES pygame random
     #FILE_END
     ```
+    
+    #PACKAGES_START
+    pygame random time etc...
+    #PACKAGES_END
     """
 
     # Если для решения ошибки потребуется работа с системой то для написания комманд в терминале используй кодовое слово "COMMAND" тут мб потребуется пошаговая система
@@ -364,14 +409,25 @@ def solve_task(task_):
     codes = extract_blocks(devops_response.text, "#FILE_START", "#FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
 
-    # packages_list = devops_response.text.split("PACKAGES")[1].split(' ')
+    files_as_string = '\n\n'.join(
+        f"**{name}**:\n{code}"
+        for name, code in zip(names, codes)
+    )
+
+    packages_list = extract_blocks(devops_response.text, " #PACKAGES_START", "#PACKAGES_END")
+
+    sis_admin_prompt = f""" 
+        {packages_list}
+        {files_as_string}
+        {folder_obj.folder_name}
+    """
+
     # import_list_of_packages(packages_list)
 
     print(devops_response.text)
     create_file(f"tests/{folder_obj.folder_name}", "project_in_string_format.txt", devops_response.text)
     add_to_log("Devops debuged", devops_response.text)
-
-    create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
+    #create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
 
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_obj.folder_name}", f"{name}", code)
