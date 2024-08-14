@@ -240,12 +240,21 @@ def solve_task(task_):
             ... (corrected code) ...
             #CODE_END
             ```
+            
+            OR
+            
+            ```html
+            #CODE_START
+            ... (corrected code) ...
+            #CODE_END
+            ```
+            
         """
         programmer_response = model.generate_content(programmer_debug_prompt, stream=True)
         programmer_response.resolve()
         time.sleep(20)
-        code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
         add_to_log("Programmer debuged", programmer_response.text)
+        code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
         development = evolution_of_development(development, code_of_programmer)
 
         programmers_responses.append(programmer_response.text)
@@ -416,11 +425,13 @@ def solve_task(task_):
 
     packages_list = extract_blocks(devops_response.text, " #PACKAGES_START", "#PACKAGES_END")
 
-    sis_admin_prompt = f""" 
-        {packages_list}
-        {files_as_string}
-        {folder_obj.folder_name}
-    """
+
+
+    # sis_admin_prompt = f"""
+    #     {packages_list}
+    #     {files_as_string}
+    #     {folder_obj.folder_name}
+    # """
 
     # import_list_of_packages(packages_list)
 
@@ -432,6 +443,10 @@ def solve_task(task_):
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_obj.folder_name}", f"{name}", code)
 
-    # After creating all files, run pylint:
-    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
-    print(pylint_results)
+    try:
+        # After creating all files, run pylint:
+        pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
+        print(pylint_results)
+        add_to_debug("Pylint", pylint_results)
+    except:
+        print("бля")
