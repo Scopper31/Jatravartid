@@ -89,7 +89,7 @@ def solve_task(task_):
     add_to_log("Teamlead", teamlead_response.text)
 
     # изначально хотел запоминать всю переписку
-    development = ''
+    development = ""
 
     tasks = extract_blocks(teamlead_response.text, "BLOCK_START", "BLOCK_END")
 
@@ -139,7 +139,7 @@ def solve_task(task_):
             ```
             
             """
-
+        # добавить блок запрос к сис админу где прогир просит сиса настроить проект например python manage.py startapp ads
         else:
             programmer_prompt = f"""
             You are a highly skilled and experienced senior multy-language developer, known for your ability to craft elegant and efficient solutions within a larger project context. You prioritize clarity, modularity, and maintainability in your code, ensuring seamless integration with existing code. 
@@ -191,11 +191,15 @@ def solve_task(task_):
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
         time.sleep(10)
-        print("=============================================================================================================================================")
+        print(
+            "============================================================================================================================================="
+        )
         print(programmer_response.text)
         add_to_log("Programmer", programmer_response.text)
 
-        code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
+        code_of_programmer = extract_blocks(
+            programmer_response.text, "#CODE_START", "#CODE_END"
+        )[0]
 
         # Перепроверка
         errors = test_mistakes_with_gpt(programmer_response.text)
@@ -241,10 +245,14 @@ def solve_task(task_):
             #CODE_END
             ```
         """
-        programmer_response = model.generate_content(programmer_debug_prompt, stream=True)
+        programmer_response = model.generate_content(
+            programmer_debug_prompt, stream=True
+        )
         programmer_response.resolve()
         time.sleep(20)
-        code_of_programmer = extract_blocks(programmer_response.text, "#CODE_START", "#CODE_END")[0]
+        code_of_programmer = extract_blocks(
+            programmer_response.text, "#CODE_START", "#CODE_END"
+        )[0]
         add_to_log("Programmer debuged", programmer_response.text)
         development = evolution_of_development(development, code_of_programmer)
 
@@ -252,10 +260,12 @@ def solve_task(task_):
         programmers_code.append(code_of_programmer)
 
     # все, что написали программисты
-    programmers_responses_as_string = '\n\n'.join(
+    programmers_responses_as_string = "\n\n".join(
         f"Programmer {i + 1}: \n{response}"
         for i, response in enumerate(programmers_responses)
     )
+    # создать промпт который попишет нужные команды (прогеры уже напишут что нужно примерно делать)
+    # в терминале для авто создания файлов для drf например через ls -R подать всё
 
     # DEVOPS
     devops_prompt = f"""
@@ -332,9 +342,8 @@ def solve_task(task_):
 
     add_to_log("Devops", devops_response.text)
 
-    files_as_string = '\n\n'.join(
-        f"**{name}**:\n{code}"
-        for name, code in zip(names, codes)
+    files_as_string = "\n\n".join(
+        f"**{name}**:\n{code}" for name, code in zip(names, codes)
     )
 
     errors = multyfile_test_mistakes_with_gpt(files_as_string)
@@ -408,30 +417,38 @@ def solve_task(task_):
 
     codes = extract_blocks(devops_response.text, "#FILE_START", "#FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
-
-    files_as_string = '\n\n'.join(
-        f"**{name}**:\n{code}"
-        for name, code in zip(names, codes)
+    """напиши req.txt и предложить его положить куда-то"""
+    files_as_string = "\n\n".join(
+        f"**{name}**:\n{code}" for name, code in zip(names, codes)
     )
 
-    packages_list = extract_blocks(devops_response.text, " #PACKAGES_START", "#PACKAGES_END")
+    packages_list = extract_blocks(
+        devops_response.text, " #PACKAGES_START", "#PACKAGES_END"
+    )
 
     sis_admin_prompt = f""" 
-        {packages_list}
-        {files_as_string}
-        {folder_obj.folder_name}
+        {packages_list} весь проект
+        {files_as_string} всё что написал девопс
+        {folder_obj.folder_name} просто название
+        типо сделать красивое расположение файлов
     """
 
     # import_list_of_packages(packages_list)
 
     print(devops_response.text)
-    create_file(f"tests/{folder_obj.folder_name}", "project_in_string_format.txt", devops_response.text)
-    add_to_log("Devops debuged", devops_response.text)
-    #create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
+    create_file(
+        f"tests/{folder_obj.folder_name}",
+        "project_in_string_format.txt",
+        devops_response.text,
+    )
+    add_to_log("Devops debugged", devops_response.text)
+    # create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
 
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_obj.folder_name}", f"{name}", code)
 
     # After creating all files, run pylint:
-    pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
+    pylint_results = run_pylint_with_ultimate_flags(
+        [f"tests/{folder_obj.folder_name}/{name}" for name in names]
+    )
     print(pylint_results)

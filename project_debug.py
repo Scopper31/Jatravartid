@@ -3,6 +3,7 @@ from config import model
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 import io
+from utilities.system_utilities import add_to_log
 
 
 def test_mistakes_with_gpt(code_string):
@@ -114,10 +115,13 @@ def run_pylint_with_ultimate_flags(files_to_lint):
     # Define your ultimate set of flags here!
     # For example, to enable all checks except for line-too-long:
     pylint_arguments = [
-                           "--disable=all",
-                           "--enable=similarities,classes,design,exceptions,format,imports,logging,method_args,miscellaneous,refactoring,spelling,string,typecheck,variables,broad_try_clause,code_style,deprecated_builtins,dunder,magic-value,parameter_documentation,typing",
-                           "--disable=line-too-long"  # Example: disable line-too-long check
-                       ] + files_to_lint
-
-    Run(pylint_arguments, reporter=reporter, exit=False)
+        "--disable=all",
+        "--enable=similarities,classes,design,exceptions,format,imports,logging,method_args,miscellaneous,refactoring,spelling,string,typecheck,variables,broad_try_clause,code_style,deprecated_builtins,dunder,magic-value,parameter_documentation,typing",
+        "--disable=line-too-long",  # Example: disable line-too-long check
+    ] + files_to_lint
+    try:
+        Run(pylint_arguments, reporter=reporter, exit=False)
+    except Exception as e:
+        print(e)
+        add_to_log("Pylint", e)
     return pylint_output.getvalue()
