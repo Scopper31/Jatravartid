@@ -1,16 +1,30 @@
 import os
 import time
 from config import model, folder_obj
-from utilities.string_utilities import extract_blocks
-from utilities.system_utilities import create_file
+from utilities.string_utilities import *
+from utilities.system_utilities import *
 
 
 folder_name = folder_obj.folder_name
 
 
 def develop(task):
-    with open(f"""tests/{folder_name}/project_in_string_format.txt""") as file:
-        code = file.read()
+    try:
+        with open(f"""tests/{folder_name}/project_in_string_format.txt""") as file:
+            code = file.read()
+    except FileNotFoundError:
+        print(
+            f"Error: Файл tests/{folder_name}/project_in_string_format.txt не найден."
+        )
+        add_to_log(
+            "Develop",
+            f"FileNotFoundError: tests/{folder_name}/project_in_string_format.txt",
+        )
+        return
+    except Exception as e:
+        print(f"Error reading the project file: {e}")
+        add_to_log("Develop", e)
+        return
 
     prompt = f"""
         Please help me fix the following Python project. I want to make the following changes:
@@ -57,8 +71,13 @@ def develop(task):
         ```
     """
 
-    response = model.generate_content(prompt, stream=True)
-    response.resolve()
+    try:
+        response = model.generate_content(prompt, stream=True)
+        response.resolve()
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        add_to_log("Develop", e)
+        return
 
     print(response.text)
     codes = extract_blocks(response.text, "#FILE_START", "#FILE_END")
@@ -70,12 +89,22 @@ def develop(task):
         number += 1
         with open(f"tests/{folder_name}/number.txt", "w") as file:
             file.write(str(number))
-
     except FileNotFoundError:
-        with open(f"tests/{folder_name}number.txt", "w") as file:
+        with open(f"tests/{folder_name}/number.txt", "w") as file:
             file.write("0")
             number = 0
-    os.makedirs(f"tests/{folder_name}/correction{number}", exist_ok=True)
-    for name, code in zip(names, codes):
-        create_file(f"tests/{folder_name}/correction{number}", f"{name}", code)
+    except Exception as e:
+        print(f"Error handling number.txt: {e}")
+        add_to_log("Develop", e)
+        return
+
+    try:
+        os.makedirs(f"tests/{folder_name}/correction{number}", exist_ok=True)
+        for name, code in zip(names, codes):
+            create_file(f"tests/{folder_name}/correction{number}", f"{name}", code)
+    except Exception as e:
+        print(f"Error creating directories or files: {e}")
+        add_to_log("Develop", e)
+        return
+
     time.sleep(20)

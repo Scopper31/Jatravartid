@@ -7,22 +7,35 @@ from correction import *
 
 
 def main():
-    ask = int(input("Новый проект: 1, Ввести коррекцию в старый 2: "))
-    if ask == 1:
-        task = input("Введите задачу: ")
-        set_folder_name(generate_alias(task))  # название папки, в которую все сохранится
-        print(folder_obj.folder_name)
-        file_work(task)
-        solve_task(task)
+    try:
+        ask = int(input("Новый проект: 1, Ввести коррекцию в старый 2: "))
+    except ValueError:
+        print("Ошибка: введено не число. Попробуйте снова.")
+        return
 
-        print("FINITA")
+    try:
+        if ask == 1:
+            task = input("Введите задачу: ")
+            set_folder_name(
+                generate_alias(task)
+            )  # название папки, в которую все сохранится
+            print(folder_obj.folder_name)
+            file_work(task)
+            solve_task(task)
+            print("FINITA")
+        else:
+            set_folder_name(input("Название проекта: "))
 
-    else:
-        set_folder_name(input("Название проекта: "))
+            while True:
+                task = input("Правка: ")
+                develop(task)
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+        add_to_log("Main", e)
 
-        while 1:
-            task = input("Правка: ")
-            develop(task)
+
+if __name__ == "__main__":
+    main()
 
 
 if __name__ == "__main__":

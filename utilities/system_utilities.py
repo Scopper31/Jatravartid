@@ -14,17 +14,17 @@ def execute_command(command):
         # Выполняем команду
         result = subprocess.run(command.split(), capture_output=True, text=True)
         if result.returncode == 0:
-            print(f'Выполнение команды: {command}')
-            print(f'Вывод: {result.stdout}')
+            print(f"Выполнение команды: {command}")
+            print(f"Вывод: {result.stdout}")
         else:
-            print(f'Ошибка выполнения команды: {command}')
-            print(f'Ошибка: {result.stderr}')
+            print(f"Ошибка выполнения команды: {command}")
+            print(f"Ошибка: {result.stderr}")
 
         # Возвращаемся в исходную папку
         os.chdir(os.path.dirname(project_path))  # Возвращаемся в родительскую папку
 
     except FileNotFoundError:
-        print(f'Команда не найдена: {command}')
+        print(f"Команда не найдена: {command}")
     except Exception as e:
         print(f"Ошибка при выполнении команды: {e}")
 
@@ -32,7 +32,9 @@ def execute_command(command):
 # создание папки с проектом и объявление лога
 def file_work(task):
     try:
-        os.makedirs(f"tests/{folder_obj.folder_name}", exist_ok=True)  # Create folder in "tests"
+        os.makedirs(
+            f"tests/{folder_obj.folder_name}", exist_ok=True
+        )  # Create folder in "tests"
 
         with open(f"tests/{folder_obj.folder_name}/debug.txt", "a") as log_file:
             log_file.write(f"\n--- {datetime.datetime.now()} ---\n")
@@ -48,15 +50,32 @@ def file_work(task):
 
 
 def create_file(path_to_folder, name, code):
-    with open(f"{path_to_folder}/{name}", "w") as file:
-        file.write(code)
+    try:
+        with open(f"{path_to_folder}/{name}", "w") as file:
+            file.write(code)
+    except OSError as e:
+        print(f"Failed to create or write to file {name} in {path_to_folder}: {e}")
+        add_to_log("create_file", e)
+    except Exception as e:
+        print(f"Unexpected error while creating file {name}: {e}")
+        add_to_log("create_file", e)
 
 
 def add_to_log(worker_type, response):
-    with open(f"tests/{folder_obj.folder_name}/log.txt", "a") as log_file:
-        log_file.write(f"{worker_type}:\n{response}\n")
+    try:
+        with open(f"tests/{folder_obj.folder_name}/log.txt", "a") as log_file:
+            log_file.write(f"{worker_type}:\n{response}\n")
+    except OSError as e:
+        print(f"Failed to write to log file: {e}")
+    except Exception as e:
+        print(f"Unexpected error while logging: {e}")
 
 
 def add_to_debug(worker_type, response):
-    with open(f"tests/{folder_obj.folder_name}/debug.txt", "a") as debug_file:
-        debug_file.write(f"{worker_type}:\n{response}\n")
+    try:
+        with open(f"tests/{folder_obj.folder_name}/debug.txt", "a") as debug_file:
+            debug_file.write(f"{worker_type}:\n{response}\n")
+    except OSError as e:
+        print(f"Failed to write to debug file: {e}")
+    except Exception as e:
+        print(f"Unexpected error while debugging: {e}")
