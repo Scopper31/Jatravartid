@@ -450,5 +450,5 @@ def solve_task(task_):
         pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
         print(pylint_results)
         add_to_debug("Pylint", pylint_results)
-    except Exception():
+    except Exception as e:
         print("бля")
