@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # pip install google-generativeai
 from alive_progress import alive_bar
-import other_file
 
 
 from solve import *
@@ -19,9 +18,6 @@ def main():
     try:
         if ask == 1:
             task = input("Введите задачу: ")
-            with alive_bar(100, title="Обработка данных") as bar:
-                bar()
-                other_file.do_something(bar)
             set_folder_name(
                 generate_alias(task)
             )  # название папки, в которую все сохранится
