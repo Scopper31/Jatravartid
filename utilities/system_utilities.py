@@ -56,7 +56,7 @@ def create_file(path_to_folder, name, code):
     except OSError as e:
         print(f"Failed to create or write to file {name} in {path_to_folder}: {e}")
         add_to_log("create_file", e)
-
+        # ТОDO написать создание папок если из нет
     except Exception as e:
         print(f"Unexpected error while creating file {name}: {e}")
         add_to_log("create_file", e)

@@ -393,6 +393,7 @@ def solve_task(task_, bar, *args, **kwargs):
     term_comnd = "\n".join(terminal)
     result_terminal = subprocess.run(term_comnd, shell=True)
     # DEVOPS
+    # TODO записывал в текущие файлы
     devops_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in assembling complex projects from individual code contributions, ensuring seamless integration and functionality. You prioritize clarity, efficiency, and maintainability in your work.
 
@@ -472,7 +473,7 @@ def solve_task(task_, bar, *args, **kwargs):
     )
 
     errors = multyfile_test_mistakes_with_gpt(files_as_string, bar)
-
+    # TODO дописать промпт так чтоб он запихивал уже в текущие файлы и обращал на них внимание
     devops_debug_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in troubleshooting complex multi-file Python projects. You prioritize clarity, efficiency, and maintainability in your work.
 
