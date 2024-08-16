@@ -30,7 +30,7 @@ def execute_command(command):
 
 
 # создание папки с проектом и объявление лога
-def file_work(task):
+def file_work(task, *args, **kwargs):
     try:
         os.makedirs(
             f"tests/{folder_obj.folder_name}", exist_ok=True
@@ -64,6 +64,16 @@ def create_file(path_to_folder, name, code):
 def add_to_log(worker_type, response):
     try:
         with open(f"tests/{folder_obj.folder_name}/log.txt", "a") as log_file:
+            log_file.write(f"{worker_type}:\n{response}\n")
+    except OSError as e:
+        print(f"Failed to write to log file: {e}")
+    except Exception as e:
+        print(f"Unexpected error while logging: {e}")
+
+
+def add_to_process(worker_type, response):
+    try:
+        with open(f"tests/{folder_obj.folder_name}/process.txt", "a") as log_file:
             log_file.write(f"{worker_type}:\n{response}\n")
     except OSError as e:
         print(f"Failed to write to log file: {e}")

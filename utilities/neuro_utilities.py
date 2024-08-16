@@ -2,7 +2,7 @@ from config import model
 from utilities.system_utilities import *
 
 
-def generate_alias(task):
+def generate_alias(task, bar, *arg, **kwargs):
 
     try:
         alias_response = model.generate_content(
@@ -11,6 +11,8 @@ def generate_alias(task):
         )  # Generate alias from task
         alias_response.resolve()
         main_text = "_".join(alias_response.text.split())
+        bar()
+        add_to_process("alias", "Done")
     except Exception as e:
         print(f"Error in generating or processing prompt: {e}")
         add_to_log("utilities.neuro_utilities/generate_alias", e)

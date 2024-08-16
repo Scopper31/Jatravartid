@@ -8,7 +8,7 @@ from config import folder_obj
 from alive_progress import alive_bar
 
 
-def solve_task(task_):
+def solve_task(task_, bar, *args, **kwargs):
     # technical writer
 
     analysis_prompt = f"""
@@ -44,6 +44,7 @@ def solve_task(task_):
     analysis_response = model.generate_content(analysis_prompt, stream=True)
     analysis_response.resolve()
     time.sleep(20)
+    bar()
 
     add_to_log("Analysis", analysis_response.text)
 
@@ -85,7 +86,7 @@ def solve_task(task_):
     teamlead_response = model.generate_content(teamlead_prompt, stream=True)
     teamlead_response.resolve()
     time.sleep(20)
-
+    bar()
     add_to_log("Teamlead", teamlead_response.text)
 
     # изначально хотел запоминать всю переписку
@@ -193,15 +194,20 @@ def solve_task(task_):
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
         time.sleep(30)
+        bar()
 
         add_to_log("Programmer", programmer_response.text)
-
-        code_of_programmer = extract_blocks(
-            programmer_response.text, "&CODE_START", "&CODE_END"
-        )[0]
+        try:
+            code_of_programmer = extract_blocks(
+                programmer_response.text, "&CODE_START", "&CODE_END"
+            )[0]
+        except Exception as e:
+            print(f"Error extracting code: {e}")
+            code_of_programmer = ""
+            continue
 
         # Перепроверка
-        errors = test_mistakes_with_gpt(programmer_response.text)
+        errors = test_mistakes_with_gpt(programmer_response.text, bar)
         add_to_log("debug", errors)
 
         programmer_debug_prompt = f"""
@@ -258,10 +264,16 @@ def solve_task(task_):
         )
         programmer_response.resolve()
         time.sleep(30)
+        bar()
         add_to_log("Programmer debuged", programmer_response.text)
-        code_of_programmer = extract_blocks(
-            programmer_response.text, "&CODE_START", "&CODE_END"
-        )[0]
+        try:
+            code_of_programmer = extract_blocks(
+                programmer_response.text, "&CODE_START", "&CODE_END"
+            )[0]
+        except Exception as e:
+            print(f"Error extracting code: {e}")
+            code_of_programmer = ""
+            continue
         development = evolution_of_development(development, code_of_programmer)
 
         programmers_responses.append(programmer_response.text)
@@ -272,7 +284,7 @@ def solve_task(task_):
         f"Programmer {i + 1}: \n{response}"
         for i, response in enumerate(programmers_responses)
     )
-
+    # СИСАДМИН
     # создать промпт который попишет нужные команды (прогеры уже напишут что нужно примерно делать)
     # в терминале для авто создания файлов для drf например через ls -R подать всё
     devops_req_terminal_prompt = f"""
@@ -293,14 +305,15 @@ def solve_task(task_):
     #FILE_REQ_END
 
     #TERMINAL_START
-    ... terminal commands ...
+    ... terminal commands without comments ...
     #TERMINAL_END
     """
     devops_req_terminal_response = model.generate_content(
         devops_req_terminal_prompt, stream=True
     )
     devops_req_terminal_response.resolve()
-    time.sleep(30)
+    time.sleep(20)
+    bar()
     requirements = extract_blocks(
         devops_req_terminal_response.text, "#FILE_REQ_START", "#FILE_REQ_END"
     )
@@ -317,10 +330,68 @@ def solve_task(task_):
         devops_req_terminal_response.text, "#TERMINAL_START", "#TERMINAL_END"
     )
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", terminal, "!!!!!!!!!!!")
-    subprocess.run(
-        f"cd tests\n cd {folder_obj.folder_name}" + "\n".join(terminal), shell=True
-    )
+    term_comnd = f"cd tests\n cd {folder_obj.folder_name}\n" + "\n".join(terminal)
+    result_terminal = subprocess.run(term_comnd, shell=True)
+    result_terminal = result_terminal.stdout
+    devops_terminal_work_prompt = f"""
+    The following commands were entered into the terminal: {term_comnd}
+    The output received was: {result_terminal}
+    
+    Your task is to thoroughly review these commands and identify any errors or issues. Understand the cause of these errors and propose new versions of the commands where necessary. Be particularly careful when selecting the appropriate commands, as they should work correctly together without causing dependency conflicts, especially when dealing with package installations or library downgrades.
 
+    If needed, you may suggest multiple commands in sequence to ensure that all required packages and dependencies are correctly managed. 
+
+    Make sure to include all the commands, both the new ones and the original ones, placing them in the correct order to achieve the desired outcome. Record all the necessary commands between "#TERMINAL_START" and "#TERMINAL_END".
+    
+    Example:
+    #TERMINAL_START
+    ... new + old commands without comments...
+    #TERMINAL_END
+    """
+    devops_terminal_work_response = model.generate_content(
+        devops_terminal_work_prompt, stream=True
+    )
+    devops_terminal_work_response.resolve()
+    time.sleep(20)
+    bar()
+    add_to_log("Devops_terminal_work_response", devops_terminal_work_response.text)
+
+    terminal = extract_blocks(
+        devops_terminal_work_response.text, "#TERMINAL_START", "#TERMINAL_END"
+    )
+    print("!2!!2!2!2!2!2!22!!2!2!2!2!22!!22!!!!!!!!!!!!!!!!!", terminal, "!!!!!!!!!!!")
+    term_comnd = "\n".join(terminal)
+    result_terminal = subprocess.run(term_comnd, shell=True)
+
+    devops_terminal_work_2_prompt = f"""
+    The following commands were entered into the terminal: {term_comnd}
+    The output received was: {result_terminal}
+    
+    Your task is to thoroughly review these commands and identify any errors or issues. Understand the cause of these errors and propose new versions of the commands where necessary. Be particularly careful when selecting the appropriate commands, as they should work correctly together without causing dependency conflicts, especially when dealing with package installations or library downgrades.
+
+    If needed, you may suggest multiple commands in sequence to ensure that all required packages and dependencies are correctly managed. 
+
+    Make sure to include all the commands, both the new ones and the original ones, placing them in the correct order to achieve the desired outcome. Record all the necessary commands between "#TERMINAL_START" and "#TERMINAL_END".
+    
+    Example:
+    #TERMINAL_START
+    ... new + old commands without comments...
+    #TERMINAL_END
+    """
+    devops_terminal_work_2_response = model.generate_content(
+        devops_terminal_work_2_prompt, stream=True
+    )
+    devops_terminal_work_2_response.resolve()
+    time.sleep(20)
+    bar()
+    add_to_log("devops_terminal_work_2_response", devops_terminal_work_2_response.text)
+
+    terminal = extract_blocks(
+        devops_terminal_work_2_response.text, "#TERMINAL_START", "#TERMINAL_END"
+    )
+    print("!3!3!3!3!3!!3!3!33!!3!33!33!33333!333!33!", terminal, "!!!!!!!!!!!")
+    term_comnd = "\n".join(terminal)
+    result_terminal = subprocess.run(term_comnd, shell=True)
     # DEVOPS
     devops_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in assembling complex projects from individual code contributions, ensuring seamless integration and functionality. You prioritize clarity, efficiency, and maintainability in your work.
@@ -389,7 +460,7 @@ def solve_task(task_):
     devops_response = model.generate_content(devops_prompt, stream=True)
     devops_response.resolve()
     time.sleep(20)
-
+    bar()
     codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
 
@@ -399,7 +470,7 @@ def solve_task(task_):
         f"**{name}**:\n{code}" for name, code in zip(names, codes)
     )
 
-    errors = multyfile_test_mistakes_with_gpt(files_as_string)
+    errors = multyfile_test_mistakes_with_gpt(files_as_string, bar)
 
     devops_debug_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in troubleshooting complex multi-file Python projects. You prioritize clarity, efficiency, and maintainability in your work.
@@ -468,7 +539,7 @@ def solve_task(task_):
     devops_response = model.generate_content(devops_debug_prompt, stream=True)
     devops_response.resolve()
     time.sleep(30)
-
+    bar()
     codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
 

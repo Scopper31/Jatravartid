@@ -16,7 +16,7 @@ class Folder_Name:
 folder_obj = Folder_Name()
 
 
-def set_folder_name(new_name):
+def set_folder_name(new_name, *args, **kwargs):
     global folder_obj
     folder_obj.folder_name = new_name
     os.makedirs(f"tests/{new_name}", exist_ok=True)

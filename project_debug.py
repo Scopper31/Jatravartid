@@ -5,7 +5,7 @@ from pylint.reporters.text import TextReporter
 import io
 
 
-def test_mistakes_with_gpt(code_string):
+def test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
     debug_prompt = f"""
         You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following Python code snippet and identifying all potential errors. 
 
@@ -40,11 +40,12 @@ def test_mistakes_with_gpt(code_string):
     """
     debug_response = model.generate_content(debug_prompt, stream=True)
     debug_response.resolve()
-    time.sleep(10)
+    time.sleep(20)
+    bar()
     return debug_response.text
 
 
-def multyfile_test_mistakes_with_gpt(code_string):
+def multyfile_test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
     debug_prompt = f"""
         You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following multi-file Python project and identifying all potential errors. 
 
@@ -104,6 +105,7 @@ def multyfile_test_mistakes_with_gpt(code_string):
     debug_response = model.generate_content(debug_prompt, stream=True)
     debug_response.resolve()
     time.sleep(20)
+    bar()
     return debug_response.text
 
 
@@ -118,7 +120,8 @@ def run_pylint_with_ultimate_flags(files_to_lint):
         "--enable=similarities,classes,design,exceptions,format,imports,logging,method_args,miscellaneous,refactoring,spelling,string,typecheck,variables,broad_try_clause,code_style,deprecated_builtins,dunder,magic-value,parameter_documentation,typing",
         "--disable=line-too-long",  # Example: disable line-too-long check
         "--msg-template='{line}:{column}:{msg_id}:{msg}'",  # Customize output format
-        "-r", "n"  # Only show errors
+        "-r",
+        "n",  # Only show errors
     ] + files_to_lint
 
     Run(pylint_arguments, reporter=reporter, exit=False)

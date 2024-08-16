@@ -7,7 +7,7 @@ from utilities import *
 folder_name = folder_obj.folder_name
 
 
-def develop(task):
+def develop(task, bar, *args, **kwargs):
     with open(f"""tests/{folder_name}/project_in_string_format.txt""") as file:
         code = file.read()
 
