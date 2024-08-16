@@ -4,12 +4,13 @@ import os
 # gemini конфигурация
 API_KEY = "AIzaSyDLHHsHyTOHOUkErElPpnvbPsJ7dcu2BKc"
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 # variables
 class Folder_Name:
     def __init__(self):
-        self.folder_name = ''
+        self.folder_name = ""
 
 
 folder_obj = Folder_Name()

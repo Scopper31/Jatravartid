@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 # pip install google-generativeai
+import subprocess
 
 from utilities.string_utilities import *
 from utilities.system_utilities import *
 from project_debug import *
 from config import folder_obj
+from alive_progress import alive_bar
 
 
 def solve_task(task_):
     # technical writer
+
     analysis_prompt = f"""
         You are a highly skilled technical writer, tasked with crafting a comprehensive technical assignment for a large, complex project. Your goal is to provide clear and detailed instructions for the programmer, ensuring they understand the project's requirements and can successfully implement the solution.
 
@@ -268,6 +271,52 @@ def solve_task(task_):
         f"Programmer {i + 1}: \n{response}"
         for i, response in enumerate(programmers_responses)
     )
+
+    # создать промпт который попишет нужные команды (прогеры уже напишут что нужно примерно делать)
+    # в терминале для авто создания файлов для drf например через ls -R подать всё
+    devops_req_terminal_prompt = f"""
+    You are acting as a DevOps engineer responsible for setting up and maintaining the environment for a development project. Your primary task is to accurately create a `requirements.txt` file and determine the complete and correct set of terminal commands required to install and run a given framework or application. 
+    **Project Overview:**
+
+    - **Technical Assignment:** {analysis_response.text}
+    - **Task Distribution:** {teamlead_response.text}
+    - **Programmers' Code:** {programmers_responses_as_string}
+    For example, if the project uses Django, you must ensure that the setup process is flawless. This includes creating a virtual environment, installing all the required dependencies from the `requirements.txt` file, initializing a new Django project, and setting up any necessary applications within the project.
+
+    It is crucial that the terminal commands you choose are precise and error-free to ensure the project runs smoothly. You must consider any potential pitfalls, such as environment compatibility issues, dependency conflicts, or missing packages, and address these in your command sequence.
+
+    Please write the `requirements.txt` file content between the markers `#FILE_REQ_START` and `#FILE_REQ_END`. Following that, list the full set of terminal commands needed for setting up the project between `#TERMINAL_START` and `#TERMINAL_END`. The commands should include steps for creating a virtual environment, installing dependencies, and any other necessary setup or configuration steps.
+
+    #FILE_REQ_START
+    ... code for requirements.txt ...
+    #FILE_REQ_END
+
+    #TERMINAL_START
+    ... terminal commands ...
+    #TERMINAL_END
+    """
+    devops_req_terminal_response = model.generate_content(
+        devops_req_terminal_prompt, stream=True
+    )
+    devops_req_terminal_response.resolve()
+    time.sleep(20)
+    requirements = extract_blocks(
+        devops_req_terminal_response.text, "#FILE_REQ_START", "#FILE_REQ_END"
+    )
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", requirements, "!!!!!!!!!!!")
+    add_to_log("Devops_req_terminal_response", devops_req_terminal_response.text)
+    # понять куда сохранять req
+    create_file(
+        f"tests/{folder_obj.folder_name}",
+        "requirements.txt",
+        "\n".join(requirements),
+    )
+
+    terminal = extract_blocks(
+        devops_req_terminal_response.text, "#TERMINAL_START", "#TERMINAL_END"
+    )
+
+    subprocess.run(f"cd tests\n cd {folder_obj.folder_name}" + terminal, shell=True)
 
     # DEVOPS
     devops_prompt = f"""
