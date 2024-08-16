@@ -401,10 +401,11 @@ def solve_task(task_, bar, *args, **kwargs):
     - **Technical Assignment:** {analysis_response.text}
     - **Task Distribution:** {teamlead_response.text}
     - **Programmers' Code:** {programmers_responses_as_string}
+    - **Structure of current project:** {get_ls_r_output(f"tests/{folder_obj.folder_name}")}
 
     **Your Task:**
 
-    1. **Code Integration:** Assemble all the code written by the programmers into a single, working project, following the technical assignment.
+    1. **Code Integration:** Assemble all the code written by the programmers into a single, working project, following the technical assignment. Using the structure of the current project, перезаписать уже текущие файлы и добавить новые 
     2. **Error Detection & Correction:**  Carefully identify and address any potential errors, inconsistencies, or missing code within the project.
     3. **Library Management:** Ensure that all necessary libraries are included and properly connected within the project. 
     4. **File Organization:**  Divide the project into well-structured files with appropriate names and extensions.  
@@ -415,7 +416,7 @@ def solve_task(task_, bar, *args, **kwargs):
 
     **Output Structure:**
 
-    - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end.  
+    - **File Names:** Use the marker `PATH_START` to indicate the beginning of the path to this file with the name and `PATH_END` to indicate the end.  
     - **File Content:**  Wrap each file's code within the markers `&FILE_START` and `&FILE_END`.
     - **Package List:**  Include the `&PACKAGES_START` and `&PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
     - **Words with markers '&' are a mandatory part of the code**
@@ -423,7 +424,7 @@ def solve_task(task_, bar, *args, **kwargs):
 
     **Example:**
 
-    NAME_START game.py NAME_END
+    PATH_START game.py PATH_END
 
     ```python
     &FILE_START
@@ -432,7 +433,7 @@ def solve_task(task_, bar, *args, **kwargs):
     ```
     
     
-    NAME_START index.html NAME_END
+    PATH_START index.html PATH_END
     
     ```html
     &FILE_START
@@ -443,7 +444,7 @@ def solve_task(task_, bar, *args, **kwargs):
 
     ... other files ...
 
-    NAME_START main.py NAME_END
+    PATH_START main.py PATH_END
 
     ```python
     &FILE_START
@@ -462,7 +463,7 @@ def solve_task(task_, bar, *args, **kwargs):
     time.sleep(20)
     bar()
     codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
-    names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
+    names = extract_blocks(devops_response.text, "PATH_START", "PATH_END")
 
     add_to_log("Devops", devops_response.text)
 
@@ -496,14 +497,14 @@ def solve_task(task_, bar, *args, **kwargs):
     **Output:**
 
     - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `&FILE_START` and `&FILE_END` to wrap each file's code.
-    - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end. 
+    - **File Names:** Use the marker `PATH_START` to indicate the beginning of the path to this file with the name and `PATH_END` to indicate the end. 
     - **Words with markers '&' are a mandatory part of the code**
     code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
     - **Package List:**  Include the `&PACKAGES_START` and `&PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
 
     **Example:**
 
-    NAME_START game.py NAME_END
+    PATH_START game.py PATH_END
 
     ```python
     &FILE_START
@@ -512,7 +513,7 @@ def solve_task(task_, bar, *args, **kwargs):
     ```
     
     
-    NAME_START index.html NAME_END
+    PATH_START index.html PATH_END
     
     ```html
     &FILE_START
@@ -522,7 +523,7 @@ def solve_task(task_, bar, *args, **kwargs):
     
     ... other files ...
 
-    NAME_START main.py NAME_END
+    PATH_START main.py PATH_END
 
     ```python
     &FILE_START
@@ -541,7 +542,7 @@ def solve_task(task_, bar, *args, **kwargs):
     time.sleep(30)
     bar()
     codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
-    names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
+    names = extract_blocks(devops_response.text, "PATH_START", "PATH_END")
 
     files_as_string = "\n\n".join(
         f"**{name}**:\n{code}" for name, code in zip(names, codes)

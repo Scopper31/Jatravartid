@@ -35,9 +35,13 @@
 #         time.sleep(0.1)
 #         bar()
 
-import subprocess
+# import subprocess
 
-terminal = [
-    "python3 -m venv env\nsource env/bin/activate\npip install -r requirements.txt\ndjango-admin startproject dating_api .\npython manage.py startapp users\npython manage.py startapp matching\npython manage.py startapp messaging\npython manage.py makemigrations\npython manage.py migrate\npython manage.py createsuperuser"
-]
-subprocess.run(f"cd tests\n cd dating-api \n" + "\n".join(terminal), shell=True)
+# terminal = [
+#     "python3 -m venv env\nsource env/bin/activate\npip install -r requirements.txt\ndjango-admin startproject dating_api .\npython manage.py startapp users\npython manage.py startapp matching\npython manage.py startapp messaging\npython manage.py makemigrations\npython manage.py migrate\npython manage.py createsuperuser"
+# ]
+# subprocess.run(f"cd tests\n cd dating-api \n" + "\n".join(terminal), shell=True)
+
+from utilities import get_ls_r_output
+
+print(get_ls_r_output("tests/restaurant-drf-api"))
