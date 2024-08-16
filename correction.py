@@ -1,8 +1,7 @@
 import os
 import time
 from config import model, folder_obj
-from utilities.string_utilities import extract_blocks
-from utilities.system_utilities import create_file
+from utilities import *
 
 
 folder_name = folder_obj.folder_name
@@ -79,6 +78,3 @@ def develop(task):
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_name}/correction{number}", f"{name}", code)
     time.sleep(20)
-
-
-

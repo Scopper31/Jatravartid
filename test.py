@@ -27,10 +27,10 @@
 # for i in tqdm(range(100), desc="Загрузка данных", leave=True, colour="green"):
 #     time.sleep(0.1)
 # var 4
-from alive_progress import alive_bar
-import time
+# from alive_progress import alive_bar
+# import time
 
-with alive_bar(100, title="Обработка данных") as bar:
-    for i in range(100):
-        time.sleep(0.1)
-        bar()
+# with alive_bar(100, title="Обработка данных") as bar:
+#     for i in range(100):
+#         time.sleep(0.1)
+#         bar()

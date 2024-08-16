@@ -2,8 +2,7 @@
 # pip install google-generativeai
 import subprocess
 
-from utilities.string_utilities import *
-from utilities.system_utilities import *
+from utilities import *
 from project_debug import *
 from config import folder_obj
 from alive_progress import alive_bar
@@ -45,7 +44,6 @@ def solve_task(task_):
     analysis_response = model.generate_content(analysis_prompt, stream=True)
     analysis_response.resolve()
     time.sleep(20)
-    print(analysis_response.text)
 
     add_to_log("Analysis", analysis_response.text)
 
@@ -87,7 +85,6 @@ def solve_task(task_):
     teamlead_response = model.generate_content(teamlead_prompt, stream=True)
     teamlead_response.resolve()
     time.sleep(20)
-    print(teamlead_response.text)
 
     add_to_log("Teamlead", teamlead_response.text)
 
@@ -195,11 +192,8 @@ def solve_task(task_):
 
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
-        time.sleep(10)
-        print(
-            "============================================================================================================================================="
-        )
-        print(programmer_response.text)
+        time.sleep(30)
+
         add_to_log("Programmer", programmer_response.text)
 
         code_of_programmer = extract_blocks(
@@ -209,7 +203,6 @@ def solve_task(task_):
         # Перепроверка
         errors = test_mistakes_with_gpt(programmer_response.text)
         add_to_log("debug", errors)
-        print(errors)
 
         programmer_debug_prompt = f"""
             You are a highly skilled and experienced senior multy-language developer, known for your ability to identify and fix bugs quickly and efficiently. You're a master of debugging and have a keen eye for detail. 
@@ -264,7 +257,7 @@ def solve_task(task_):
             programmer_debug_prompt, stream=True
         )
         programmer_response.resolve()
-        time.sleep(10)
+        time.sleep(30)
         add_to_log("Programmer debuged", programmer_response.text)
         code_of_programmer = extract_blocks(
             programmer_response.text, "&CODE_START", "&CODE_END"
@@ -307,11 +300,11 @@ def solve_task(task_):
         devops_req_terminal_prompt, stream=True
     )
     devops_req_terminal_response.resolve()
-    time.sleep(20)
+    time.sleep(30)
     requirements = extract_blocks(
         devops_req_terminal_response.text, "#FILE_REQ_START", "#FILE_REQ_END"
     )
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", requirements, "!!!!!!!!!!!")
+
     add_to_log("Devops_req_terminal_response", devops_req_terminal_response.text)
     # понять куда сохранять req
     create_file(
@@ -323,8 +316,10 @@ def solve_task(task_):
     terminal = extract_blocks(
         devops_req_terminal_response.text, "#TERMINAL_START", "#TERMINAL_END"
     )
-
-    subprocess.run(f"cd tests\n cd {folder_obj.folder_name}" + terminal, shell=True)
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", terminal, "!!!!!!!!!!!")
+    subprocess.run(
+        f"cd tests\n cd {folder_obj.folder_name}" + "\n".join(terminal), shell=True
+    )
 
     # DEVOPS
     devops_prompt = f"""
@@ -416,6 +411,7 @@ def solve_task(task_):
     - **Programmers' Code:** {programmers_responses_as_string}
     - **Previous Code:** {files_as_string}
     - **Error Log:** {errors}
+    - **Structure of project:** {get_ls_r_output(f"tests/{folder_obj.folder_name}")}
 
     **Your Task:**
 
@@ -471,7 +467,7 @@ def solve_task(task_):
     # Если для решения ошибки потребуется работа с системой то для написания комманд в терминале используй кодовое слово "COMMAND" тут мб потребуется пошаговая система
     devops_response = model.generate_content(devops_debug_prompt, stream=True)
     devops_response.resolve()
-    time.sleep(20)
+    time.sleep(30)
 
     codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
@@ -484,15 +480,14 @@ def solve_task(task_):
         devops_response.text, " &PACKAGES_START", "&PACKAGES_END"
     )
 
-    # sis_admin_prompt = f"""
-    #     {packages_list}
-    #     {files_as_string}
-    #     {folder_obj.folder_name}
-    # """
+    sis_admin_prompt = f"""
+        {packages_list}
+        {files_as_string}
+        {folder_obj.folder_name}
+    """
 
     # import_list_of_packages(packages_list)
 
-    print(devops_response.text)
     create_file(
         f"tests/{folder_obj.folder_name}",
         "project_in_string_format.txt",
@@ -509,7 +504,6 @@ def solve_task(task_):
         pylint_results = run_pylint_with_ultimate_flags(
             [f"tests/{folder_obj.folder_name}/{name}" for name in names]
         )
-        print(pylint_results)
         add_to_debug("Pylint", pylint_results)
     except Exception as e:
-        print(f"problem with pylint: {e}")
+        add_to_debug("problem with pylint: ", e)
