@@ -39,18 +39,14 @@ def solve_task(task_):
         - Provide sufficient detail and examples to guide the programmer effectively.
         - Ensure that the assignment is well-structured and easy to follow.
     """
-    try:
-        analysis_response = model.generate_content(analysis_prompt, stream=True)
-        analysis_response.resolve()
-    except Exception as e:
-        print(f"Error in generating or processing prompt: {e}")
-        add_to_log("solve_task-analysis", e)
+    analysis_response = model.generate_content(analysis_prompt, stream=True)
+    analysis_response.resolve()
     time.sleep(20)
     print(analysis_response.text)
 
     add_to_log("Analysis", analysis_response.text)
 
-    number_of_prog = 6
+    number_of_prog = 3
 
     teamlead_prompt = f"""
         You are a highly skilled and experienced team lead, known for your expertise in efficient task allocation and code optimization. You prioritize clarity, avoiding unnecessary duplication and complexity.
@@ -84,19 +80,16 @@ def solve_task(task_):
 
         ... and so on for each programmer ...
     """
-    try:
-        teamlead_response = model.generate_content(teamlead_prompt, stream=True)
-        teamlead_response.resolve()
-    except Exception as e:
-        print(f"Error in generating or processing prompt: {e}")
-        add_to_log("solve_task-teamlead", e)
+
+    teamlead_response = model.generate_content(teamlead_prompt, stream=True)
+    teamlead_response.resolve()
     time.sleep(20)
     print(teamlead_response.text)
 
     add_to_log("Teamlead", teamlead_response.text)
 
     # изначально хотел запоминать всю переписку
-    development = ""
+    development = ''
 
     tasks = extract_blocks(teamlead_response.text, "BLOCK_START", "BLOCK_END")
 
@@ -123,30 +116,31 @@ def solve_task(task_):
             - **Code Format:**  Use a standard Python code block to present your solution.  
             - **Clear Comments:** Include concise and informative comments to explain the purpose of your code and any complex logic.
             - **Code Completion:** Write the entire code of the task, ensuring it is complete.
-
+            - **Words with markers '&' are a mandatory part of the code**
+            
             **Final Code Structure:**
 
-            * Begin your code with the marker `#CODE_START`
-            * End your code with the marker `#CODE_END`
+            * Begin your code with the marker `&CODE_START`
+            * End your code with the marker `&CODE_END`
 
             **Example:**
 
             ```python
-            #CODE_START
+            &CODE_START
             ... (code) ...
-            #CODE_END
+            &CODE_END
             ```
             
             OR
             
             ```html
-            #CODE_START
+            &CODE_START
             ... (code) ...
-            #CODE_END
+            &CODE_END
             ```
             
             """
-        # добавить блок запрос к сис админу где прогир просит сиса настроить проект например python manage.py startapp ads
+
         else:
             programmer_prompt = f"""
             You are a highly skilled and experienced senior multy-language developer, known for your ability to craft elegant and efficient solutions within a larger project context. You prioritize clarity, modularity, and maintainability in your code, ensuring seamless integration with existing code. 
@@ -172,42 +166,38 @@ def solve_task(task_):
 
             - **Code Format:** Use a standard Python code block to present your solution.
             - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code.
-
+            - **Words with markers '&' are a mandatory part of the code**
+            
             **Final Code Structure:**
 
-            - Begin your code with the marker #CODE_START
-            - End your code with the marker #CODE_END
+            - Begin your code with the marker &CODE_START
+            - End your code with the marker &CODE_END
 
             **Example:**
 
             ```python
-            #CODE_START
+            &CODE_START
             ... (code) ...
-            #CODE_END
+            &CODE_END
             ```
             
             OR
             
             ```html
-            #CODE_START
+            &CODE_START
             ... (code) ...
-            #CODE_END
+            &CODE_END
             ```
         """
 
         programmer_response = model.generate_content(programmer_prompt, stream=True)
         programmer_response.resolve()
-
         time.sleep(10)
-        print(
-            "============================================================================================================================================="
-        )
+        print("=============================================================================================================================================")
         print(programmer_response.text)
         add_to_log("Programmer", programmer_response.text)
 
-        code_of_programmer = extract_blocks(
-            programmer_response.text, "#CODE_START", "#CODE_END"
-        )[0]
+        code_of_programmer = extract_blocks(programmer_response.text, "&CODE_START", "&CODE_END")[0]
 
         # Перепроверка
         errors = test_mistakes_with_gpt(programmer_response.text)
@@ -233,56 +223,51 @@ def solve_task(task_):
             - **Analyze the Errors:** Carefully study the error messages provided. Understand the cause of each error and its potential impact on the code's functionality.
             - **Apply Fixes:** Implement precise and efficient fixes to correct the errors. Ensure that your changes address the root cause of the issue.
             - **Test Thoroughly:** After making corrections, test your code to confirm that the errors have been resolved and that the code functions as expected.
-
+            - **Write code fully, completely without missing any code**
             **Output:**
 
             - **Code Format:** Use a standard Python code block to present your corrected code.
             - **Clear Comments:** Include comments to explain your fixes and any changes you've made to the original code.
-
+            - **Words with markers '&' are a mandatory part of the code**
+            
             **Final Code Structure:**
 
-            - Begin your code with the marker #CODE_START
-            - End your code with the marker #CODE_END
+            - Begin your code with the marker &CODE_START
+            - End your code with the marker &CODE_END
             markers are a mandatory part of the code
             "```python" , "```" are a mandatory part of the code
             **Example:**
 
             ```python
-            #CODE_START
+            &CODE_START
             ... (corrected code) ...
-            #CODE_END
+            &CODE_END
             ```
             
             OR
             
             ```html
-            #CODE_START
+            &CODE_START
             ... (corrected code) ...
-            #CODE_END
+            &CODE_END
             ```
             
         """
-        programmer_response = model.generate_content(
-            programmer_debug_prompt, stream=True
-        )
+        programmer_response = model.generate_content(programmer_debug_prompt, stream=True)
         programmer_response.resolve()
-        time.sleep(20)
-        code_of_programmer = extract_blocks(
-            programmer_response.text, "#CODE_START", "#CODE_END"
-        )[0]
+        time.sleep(10)
         add_to_log("Programmer debuged", programmer_response.text)
+        code_of_programmer = extract_blocks(programmer_response.text, "&CODE_START", "&CODE_END")[0]
         development = evolution_of_development(development, code_of_programmer)
 
         programmers_responses.append(programmer_response.text)
         programmers_code.append(code_of_programmer)
 
     # все, что написали программисты
-    programmers_responses_as_string = "\n\n".join(
+    programmers_responses_as_string = '\n\n'.join(
         f"Programmer {i + 1}: \n{response}"
         for i, response in enumerate(programmers_responses)
     )
-    # создать промпт который попишет нужные команды (прогеры уже напишут что нужно примерно делать)
-    # в терминале для авто создания файлов для drf например через ls -R подать всё
 
     # DEVOPS
     devops_prompt = f"""
@@ -303,33 +288,33 @@ def solve_task(task_):
     5. **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
         - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the file with name `main` so that the project runs seamlessly.** 
     6. **Project Completion:**  Create a complete and functional project, ready for testing and deployment.
-    7. **Package Listing:**  At the end, provide a list of all the packages used in the project, wrapped within the markers `#PACKAGES_START` and `#PACKAGES_END`.
+    7. **Package Listing:**  At the end, provide a list of all the packages used in the project, wrapped within the markers `&PACKAGES_START` and `&PACKAGES_END`.
 
     **Output Structure:**
 
     - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end.  
-    - **File Content:**  Wrap each file's code within the markers `#FILE_START` and `#FILE_END`.
-    - **Package List:**  Include the `#PACKAGES_START` and `#PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
-    
-    Markers are a mandatory part of the code
+    - **File Content:**  Wrap each file's code within the markers `&FILE_START` and `&FILE_END`.
+    - **Package List:**  Include the `&PACKAGES_START` and `&PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
+    - **Words with markers '&' are a mandatory part of the code**
+
 
     **Example:**
 
     NAME_START game.py NAME_END
 
     ```python
-    #FILE_START
+    &FILE_START
     ... code for game.py ...
-    #FILE_END
+    &FILE_END
     ```
     
     
     NAME_START index.html NAME_END
     
     ```html
-    #FILE_START
+    &FILE_START
     ... code for index.html ...
-    #FILE_END
+    &FILE_END
     ```
     
 
@@ -338,15 +323,14 @@ def solve_task(task_):
     NAME_START main.py NAME_END
 
     ```python
-    #FILE_START
+    &FILE_START
     ... code for main.py ...
-    
-    #FILE_END
+    &FILE_END
     ```
     
-    #PACKAGES_START
+    &PACKAGES_START
     pygame random etc...
-    #PACKAGES_END
+    &PACKAGES_END
     
     """
 
@@ -354,13 +338,14 @@ def solve_task(task_):
     devops_response.resolve()
     time.sleep(20)
 
-    codes = extract_blocks(devops_response.text, "#FILE_START", "#FILE_END")
+    codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
 
     add_to_log("Devops", devops_response.text)
 
-    files_as_string = "\n\n".join(
-        f"**{name}**:\n{code}" for name, code in zip(names, codes)
+    files_as_string = '\n\n'.join(
+        f"**{name}**:\n{code}"
+        for name, code in zip(names, codes)
     )
 
     errors = multyfile_test_mistakes_with_gpt(files_as_string)
@@ -387,28 +372,29 @@ def solve_task(task_):
     In case of an error in the connection of the program files, rearrange everything so that it leads to correct operation
     **Output:**
 
-    - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `#FILE_START` and `#FILE_END` to wrap each file's code.
+    - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `&FILE_START` and `&FILE_END` to wrap each file's code.
     - **File Names:** Use the marker `NAME_START` to indicate the beginning of the file name and `NAME_END` to indicate the end. 
-    markers are a mandatory part of the code
-    code blocks "```python" , "```" or "```html" , "```" etc...  are a mandatory part of the code
+    - **Words with markers '&' are a mandatory part of the code**
+    code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
+    - **Package List:**  Include the `&PACKAGES_START` and `&PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
 
     **Example:**
 
     NAME_START game.py NAME_END
 
     ```python
-    #FILE_START
+    &FILE_START
     ... (corrected code for game.py) ...
-    #FILE_END
+    &FILE_END
     ```
     
     
     NAME_START index.html NAME_END
     
     ```html
-    #FILE_START
+    &FILE_START
     ... (corrected code for index.html) ...
-    #FILE_END
+    &FILE_END
     ```
     
     ... other files ...
@@ -416,15 +402,14 @@ def solve_task(task_):
     NAME_START main.py NAME_END
 
     ```python
-    #FILE_START
+    &FILE_START
     ... (corrected code for main.py) ...
-    #PACKAGES pygame random
-    #FILE_END
+    &FILE_END
     ```
     
-    #PACKAGES_START
+    &PACKAGES_START
     pygame random time etc...
-    #PACKAGES_END
+    &PACKAGES_END
     """
 
     # Если для решения ошибки потребуется работа с системой то для написания комманд в терминале используй кодовое слово "COMMAND" тут мб потребуется пошаговая система
@@ -432,39 +417,38 @@ def solve_task(task_):
     devops_response.resolve()
     time.sleep(20)
 
-    codes = extract_blocks(devops_response.text, "#FILE_START", "#FILE_END")
+    codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
     names = extract_blocks(devops_response.text, "NAME_START", "NAME_END")
-    """напиши req.txt и предложить его положить куда-то"""
-    files_as_string = "\n\n".join(
-        f"**{name}**:\n{code}" for name, code in zip(names, codes)
+
+    files_as_string = '\n\n'.join(
+        f"**{name}**:\n{code}"
+        for name, code in zip(names, codes)
     )
 
-    packages_list = extract_blocks(
-        devops_response.text, " #PACKAGES_START", "#PACKAGES_END"
-    )
+    packages_list = extract_blocks(devops_response.text, " &PACKAGES_START", "&PACKAGES_END")
 
-    sis_admin_prompt = f""" 
-        {packages_list}
-        {files_as_string}
-        {folder_obj.folder_name}
-    """
+
+
+    # sis_admin_prompt = f"""
+    #     {packages_list}
+    #     {files_as_string}
+    #     {folder_obj.folder_name}
+    # """
 
     # import_list_of_packages(packages_list)
 
     print(devops_response.text)
-    create_file(
-        f"tests/{folder_obj.folder_name}",
-        "project_in_string_format.txt",
-        devops_response.text,
-    )
-    add_to_log("Devops debugged", devops_response.text)
-    # create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
+    create_file(f"tests/{folder_obj.folder_name}", "project_in_string_format.txt", devops_response.text)
+    add_to_log("Devops debuged", devops_response.text)
+    #create_file(f"tests/{folder_obj.folder_name}", "__init__.py", devops_response.text)
 
     for name, code in zip(names, codes):
         create_file(f"tests/{folder_obj.folder_name}", f"{name}", code)
 
-    # After creating all files, run pylint:
-    pylint_results = run_pylint_with_ultimate_flags(
-        [f"tests/{folder_obj.folder_name}/{name}" for name in names]
-    )
-    print(pylint_results)
+    try:
+        # After creating all files, run pylint:
+        pylint_results = run_pylint_with_ultimate_flags([f"tests/{folder_obj.folder_name}/{name}" for name in names])
+        print(pylint_results)
+        add_to_debug("Pylint", pylint_results)
+    except Exception():
+        print("бля")
