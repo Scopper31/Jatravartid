@@ -6,10 +6,12 @@ from utilities.string_utilities import *
 from utilities.system_utilities import *
 from project_debug import *
 from config import folder_obj
+from alive_progress import alive_bar
 
 
 def solve_task(task_):
     # technical writer
+
     analysis_prompt = f"""
         You are a highly skilled technical writer, tasked with crafting a comprehensive technical assignment for a large, complex project. Your goal is to provide clear and detailed instructions for the programmer, ensuring they understand the project's requirements and can successfully implement the solution.
 
@@ -319,17 +321,14 @@ def solve_task(task_):
     create_file(
         f"tests/{folder_obj.folder_name}",
         "requirements.txt",
-        requirements,
+        "\n".join(requirements),
     )
 
     terminal = extract_blocks(
         devops_req_terminal_response.text, "#TERMINAL_START", "#TERMINAL_END"
     )
-    subprocess.run(
-        f"open -a Terminal .\ncd tests\n cd folder_obj.folder_name", shell=True
-    )
 
-    subprocess.run(terminal, shell=True)
+    subprocess.run(f"cd tests\n cd {folder_obj.folder_name}" + terminal, shell=True)
 
     # DEVOPS
     devops_prompt = f"""
