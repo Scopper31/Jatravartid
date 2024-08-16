@@ -3,7 +3,6 @@ from config import model
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 import io
-from utilities.system_utilities import add_to_log
 
 
 def test_mistakes_with_gpt(code_string):
@@ -39,12 +38,8 @@ def test_mistakes_with_gpt(code_string):
         markers of beginning and ending of something are a mandatory part of the code
         "```python" , "```" are a mandatory part of the code
     """
-    try:
-        debug_response = model.generate_content(debug_prompt, stream=True)
-        debug_response.resolve()
-    except Exception as e:
-        print(f"Error in generating or resolving content: {e}")
-        add_to_log("GPT Debug", e)
+    debug_response = model.generate_content(debug_prompt, stream=True)
+    debug_response.resolve()
     time.sleep(10)
     return debug_response.text
 
@@ -106,12 +101,8 @@ def multyfile_test_mistakes_with_gpt(code_string):
         Suggested Fix: Either define my_variable in this file or import it from the file where it is defined.
         Important: Be thorough in your analysis, and aim to find as many errors as possible. Explain your reasoning clearly and provide specific recommendations for fixes. Don't hesitate to identify potential bugs, even if they are not immediately apparent during a quick glance.
     """
-    try:
-        debug_response = model.generate_content(debug_prompt, stream=True)
-        debug_response.resolve()
-    except Exception as e:
-        print(f"Error in generating or resolving content for multi-file: {e}")
-        add_to_log("GPT Multi-file Debug", e)
+    debug_response = model.generate_content(debug_prompt, stream=True)
+    debug_response.resolve()
     time.sleep(20)
     return debug_response.text
 
@@ -126,11 +117,9 @@ def run_pylint_with_ultimate_flags(files_to_lint):
         "--disable=all",
         "--enable=similarities,classes,design,exceptions,format,imports,logging,method_args,miscellaneous,refactoring,spelling,string,typecheck,variables,broad_try_clause,code_style,deprecated_builtins,dunder,magic-value,parameter_documentation,typing",
         "--disable=line-too-long",  # Example: disable line-too-long check
+        "--msg-template='{line}:{column}:{msg_id}:{msg}'",  # Customize output format
+        "-r", "n"  # Only show errors
     ] + files_to_lint
-    try:
-        Run(pylint_arguments, reporter=reporter, exit=False)
-    except Exception as e:
-        print(f"Error running pylint: {e}")
-        add_to_log("Pylint", e)
 
+    Run(pylint_arguments, reporter=reporter, exit=False)
     return pylint_output.getvalue()
