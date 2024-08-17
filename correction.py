@@ -3,7 +3,7 @@ import time
 from config import model, folder_obj
 from utilities import *
 
-
+#TODO ВСЕ НАХЕР ПЕРЕПИСАТЬ
 folder_name = folder_obj.folder_name
 
 
