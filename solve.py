@@ -460,12 +460,12 @@ def solve_task(task_, bar, *args, **kwargs):
     time.sleep(20)
     bar()
     codes = extract_blocks(devops_response.text, "&FILE_START", "&FILE_END")
-    names = extract_blocks(devops_response.text, "PATH_START", "PATH_END")
+    paths = extract_blocks(devops_response.text, "PATH_START", "PATH_END")
 
     add_to_log("Devops", devops_response.text)
 
     files_as_string = "\n\n".join(
-        f"**{name}**:\n{code}" for name, code in zip(names, codes)
+        f"**{path}**:\n{code}" for path, code in zip(paths, codes)
     )
 
     errors = multyfile_test_mistakes_with_gpt(files_as_string, bar)
