@@ -5,7 +5,7 @@ import subprocess
 from utilities import *
 from project_debug import *
 from config import folder_obj
-from alive_progress import alive_bar
+#from alive_progress import alive_bar
 
 
 def solve_task(task_, bar, *args, **kwargs):
@@ -114,16 +114,17 @@ def solve_task(task_, bar, *args, **kwargs):
 
             **Output:**
 
-            - **Code Format:**  Use a standard Python code block to present your solution.  
+            - **Code Format:** Use a standard code block to present solution of your task.
             - **Clear Comments:** Include concise and informative comments to explain the purpose of your code and any complex logic.
-            - **Code Completion:** Write the entire code of the task, ensuring it is complete.
+            - **Code Completion:** Write the entire code of the task, ensuring it is complete, without missing pieces of code.
             - **Words with markers '&' are a mandatory part of the code**
             
             **Final Code Structure:**
 
             * Begin your code with the marker `&CODE_START`
             * End your code with the marker `&CODE_END`
-
+            - Code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
+            
             **Example:**
 
             ```python
@@ -131,15 +132,20 @@ def solve_task(task_, bar, *args, **kwargs):
             ... (code) ...
             &CODE_END
             ```
-            
-            OR
-            
+
             ```html
             &CODE_START
             ... (code) ...
             &CODE_END
             ```
             
+            ... other codes ...
+        
+            ```python
+            &CODE_START
+            ... (code) ...
+            &CODE_END
+            ```
             """
 
         else:
@@ -148,12 +154,12 @@ def solve_task(task_, bar, *args, **kwargs):
 
             **Your Task:** {task_}
 
-            **Context:** You're working on a large project, building upon the existing code provided below:
-
-            ```python
+            **Context:** You're working on a large project, building your technical assignment upon the existing code provided below :
+            
+            ```
             {development}
             ```
-
+            
             **Guidelines:**
 
             - **Seamless Integration:** Ensure your code seamlessly integrates with the existing code, avoiding unnecessary duplication and complexity.
@@ -165,15 +171,16 @@ def solve_task(task_, bar, *args, **kwargs):
 
             **Output:**
 
-            - **Code Format:** Use a standard Python code block to present your solution.
-            - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code.
+            - **Code Format:** Use a standard code block to present solution of your task.
+            - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code, without missing pieces of code.
             - **Words with markers '&' are a mandatory part of the code**
             
             **Final Code Structure:**
 
             - Begin your code with the marker &CODE_START
             - End your code with the marker &CODE_END
-
+            - Code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
+            
             **Example:**
 
             ```python
@@ -181,10 +188,16 @@ def solve_task(task_, bar, *args, **kwargs):
             ... (code) ...
             &CODE_END
             ```
-            
-            OR
-            
+
             ```html
+            &CODE_START
+            ... (code) ...
+            &CODE_END
+            ```
+            
+            ... other codes ...
+        
+            ```python
             &CODE_START
             ... (code) ...
             &CODE_END
@@ -200,25 +213,27 @@ def solve_task(task_, bar, *args, **kwargs):
         try:
             code_of_programmer = extract_blocks(
                 programmer_response.text, "&CODE_START", "&CODE_END"
-            )[0]
+            )
         except Exception as e:
             print(f"Error extracting code: {e}")
-            code_of_programmer = ""
+            code_of_programmer = []
             continue
 
         # Перепроверка
         errors = test_mistakes_with_gpt(programmer_response.text, bar)
         add_to_log("debug", errors)
-
+        code = "\n".join(code_of_programmer)
         programmer_debug_prompt = f"""
             You are a highly skilled and experienced senior multy-language developer, known for your ability to identify and fix bugs quickly and efficiently. You're a master of debugging and have a keen eye for detail. 
 
-            **Your Task:**  You've been asked to review and fix the following Python code, which has some errors:
-
+            **Your Task:**  You've been asked to review and fix the following code, which has some errors:
             ```
-            {code_of_programmer}
+            {code}
             ```
-
+            
+            **Code of another  part of the project:**
+            {development}
+            
             **What the code does:**
             {task_}
 
@@ -229,19 +244,19 @@ def solve_task(task_, bar, *args, **kwargs):
             - **Analyze the Errors:** Carefully study the error messages provided. Understand the cause of each error and its potential impact on the code's functionality.
             - **Apply Fixes:** Implement precise and efficient fixes to correct the errors. Ensure that your changes address the root cause of the issue.
             - **Test Thoroughly:** After making corrections, test your code to confirm that the errors have been resolved and that the code functions as expected.
+            - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code, without missing pieces of code.
             - **Write code fully, completely without missing any code**
+            
             **Output:**
-
-            - **Code Format:** Use a standard Python code block to present your corrected code.
-            - **Clear Comments:** Include comments to explain your fixes and any changes you've made to the original code.
+            - **Code Format:** Use a standard code block to present solution of your task.
+            - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code, without missing pieces of code.
             - **Words with markers '&' are a mandatory part of the code**
             
             **Final Code Structure:**
-
             - Begin your code with the marker &CODE_START
             - End your code with the marker &CODE_END
-            markers are a mandatory part of the code
-            "```python" , "```" are a mandatory part of the code
+            - Code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
+
             **Example:**
 
             ```python
@@ -249,15 +264,20 @@ def solve_task(task_, bar, *args, **kwargs):
             ... (corrected code) ...
             &CODE_END
             ```
-            
-            OR
-            
+
             ```html
             &CODE_START
             ... (corrected code) ...
             &CODE_END
             ```
             
+            ... other codes ...
+        
+            ```python
+            &CODE_START
+            ... (corrected code) ...
+            &CODE_END
+            ```
         """
         programmer_response = model.generate_content(
             programmer_debug_prompt, stream=True
@@ -269,44 +289,67 @@ def solve_task(task_, bar, *args, **kwargs):
         try:
             code_of_programmer = extract_blocks(
                 programmer_response.text, "&CODE_START", "&CODE_END"
-            )[0]
+            )
         except Exception as e:
             print(f"Error extracting code: {e}")
-            code_of_programmer = ""
+            code_of_programmer = []
             continue
-        development = evolution_of_development(development, code_of_programmer)
+        code = "\n".join(code_of_programmer)
+        development = evolution_of_development(development, code)
 
         programmers_responses.append(programmer_response.text)
-        programmers_code.append(code_of_programmer)
+        programmers_code.append(code)
 
     # все, что написали программисты
     programmers_responses_as_string = "\n\n".join(
-        f"Programmer {i + 1}: \n{response}"
+        f"Programmer {i + 1}:\n{response}"
         for i, response in enumerate(programmers_responses)
     )
+
     # СИСАДМИН
     # создать промпт который попишет нужные команды (прогеры уже напишут что нужно примерно делать)
     # в терминале для авто создания файлов для drf например через ls -R подать всё
     devops_req_terminal_prompt = f"""
     You are acting as a DevOps engineer responsible for setting up and maintaining the environment for a development project. Your primary task is to accurately create a `requirements.txt` file and determine the complete and correct set of terminal commands required to install and run a given framework or application. 
+    
     **Project Overview:**
 
-    - **Technical Assignment:** {analysis_response.text}
-    - **Task Distribution:** {teamlead_response.text}
-    - **Programmers' Code:** {programmers_responses_as_string}
+    - **Technical Assignment:**:
+    {analysis_response.text}
+    
+    - **Task Distribution:**:
+    {teamlead_response.text}
+    
+    - **Programmers' Code:**:
+    {programmers_responses_as_string}
+   
     For example, if the project uses Django, you must ensure that the setup process is flawless. This includes creating a virtual environment, installing all the required dependencies from the `requirements.txt` file, initializing a new Django project, and setting up any necessary applications within the project.
 
     It is crucial that the terminal commands you choose are precise and error-free to ensure the project runs smoothly. You must consider any potential pitfalls, such as environment compatibility issues, dependency conflicts, or missing packages, and address these in your command sequence.
 
-    Please write the `requirements.txt` file content between the markers `#FILE_REQ_START` and `#FILE_REQ_END`. Following that, list the full set of terminal commands needed for setting up the project between `#TERMINAL_START` and `#TERMINAL_END`. The commands should include steps for creating a virtual environment, installing dependencies, and any other necessary setup or configuration steps.
+    **File with requirements**
+    Write the `requirements.txt` file content between the markers `&FILE_REQ_START` and `&FILE_REQ_END`.
+    
+    **Work with terminal**
+    - Following that, list the full set of terminal commands needed for setting up the project between `&TERMINAL_START` and `&TERMINAL_END`. The commands should include steps for creating a virtual environment, installing dependencies, and any other necessary setup or configuration steps. For example, to work with the django framework, you need to initially create a new Django project, which will create a project basis for us.
+    - Be particularly careful when selecting the appropriate commands, as they should work correctly together without causing dependency conflicts, especially when dealing with package installations or library downgrades.
+    - If needed, you may suggest multiple commands in sequence to ensure that all required packages and dependencies are correctly managed. 
+    -  Make sure to include all the commands, both the new ones and the original ones, placing them in the correct order to achieve the desired outcome.
+    
+     **Output:**
+        - **Completion:** Write the entire solution with the right order, ensuring it is complete.
+        - **Words with markers '&' are a mandatory part of the code**
 
-    #FILE_REQ_START
-    ... code for requirements.txt ...
-    #FILE_REQ_END
 
-    #TERMINAL_START
-    ... terminal commands without comments ...
-    #TERMINAL_END
+    **Example:**    
+    
+    &FILE_REQ_START
+    ... content for requirements.txt with '\\n' as separators...
+    &FILE_REQ_END
+
+    &TERMINAL_START
+    ... terminal commands without any comments '\\n' as separators...
+    &TERMINAL_END
     """
     devops_req_terminal_response = model.generate_content(
         devops_req_terminal_prompt, stream=True
@@ -315,7 +358,7 @@ def solve_task(task_, bar, *args, **kwargs):
     time.sleep(20)
     bar()
     requirements = extract_blocks(
-        devops_req_terminal_response.text, "#FILE_REQ_START", "#FILE_REQ_END"
+        devops_req_terminal_response.text, "&FILE_REQ_START", "&FILE_REQ_END"
     )
 
     add_to_log("Devops_req_terminal_response", devops_req_terminal_response.text)
@@ -323,93 +366,46 @@ def solve_task(task_, bar, *args, **kwargs):
     create_file(
         f"tests/{folder_obj.folder_name}",
         "requirements.txt",
-        "\n".join(requirements),
+        requirements,
     )
 
     terminal = extract_blocks(
-        devops_req_terminal_response.text, "#TERMINAL_START", "#TERMINAL_END"
+        devops_req_terminal_response.text, "&TERMINAL_START", "&TERMINAL_END"
     )
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", terminal, "!!!!!!!!!!!")
-    term_comnd = f"cd tests\n cd {folder_obj.folder_name}\n" + "\n".join(terminal)
+
+    #print("!", terminal, "!")
+    term_comnd = f"cd tests\n cd {folder_obj.folder_name}\n" + terminal
     result_terminal = subprocess.run(term_comnd, shell=True)
-    result_terminal = result_terminal.stdout
-    devops_terminal_work_prompt = f"""
-    The following commands were entered into the terminal: {term_comnd}
-    The output received was: {result_terminal}
-    
-    Your task is to thoroughly review these commands and identify any errors or issues. Understand the cause of these errors and propose new versions of the commands where necessary. Be particularly careful when selecting the appropriate commands, as they should work correctly together without causing dependency conflicts, especially when dealing with package installations or library downgrades.
+    #result_terminal = result_terminal.stdout
 
-    If needed, you may suggest multiple commands in sequence to ensure that all required packages and dependencies are correctly managed. 
 
-    Make sure to include all the commands, both the new ones and the original ones, placing them in the correct order to achieve the desired outcome. Record all the necessary commands between "#TERMINAL_START" and "#TERMINAL_END".
-    
-    Example:
-    #TERMINAL_START
-    ... new + old commands without comments...
-    #TERMINAL_END
-    """
-    devops_terminal_work_response = model.generate_content(
-        devops_terminal_work_prompt, stream=True
-    )
-    devops_terminal_work_response.resolve()
-    time.sleep(20)
-    bar()
-    add_to_log("Devops_terminal_work_response", devops_terminal_work_response.text)
-
-    terminal = extract_blocks(
-        devops_terminal_work_response.text, "#TERMINAL_START", "#TERMINAL_END"
-    )
-    print("!2!!2!2!2!2!2!22!!2!2!2!2!22!!22!!!!!!!!!!!!!!!!!", terminal, "!!!!!!!!!!!")
-    term_comnd = "\n".join(terminal)
-    result_terminal = subprocess.run(term_comnd, shell=True)
-
-    devops_terminal_work_2_prompt = f"""
-    The following commands were entered into the terminal: {term_comnd}
-    The output received was: {result_terminal}
-    
-    Your task is to thoroughly review these commands and identify any errors or issues. Understand the cause of these errors and propose new versions of the commands where necessary. Be particularly careful when selecting the appropriate commands, as they should work correctly together without causing dependency conflicts, especially when dealing with package installations or library downgrades.
-
-    If needed, you may suggest multiple commands in sequence to ensure that all required packages and dependencies are correctly managed. 
-
-    Make sure to include all the commands, both the new ones and the original ones, placing them in the correct order to achieve the desired outcome. Record all the necessary commands between "#TERMINAL_START" and "#TERMINAL_END".
-    
-    Example:
-    #TERMINAL_START
-    ... new + old commands without comments...
-    #TERMINAL_END
-    """
-    devops_terminal_work_2_response = model.generate_content(
-        devops_terminal_work_2_prompt, stream=True
-    )
-    devops_terminal_work_2_response.resolve()
-    time.sleep(20)
-    bar()
-    add_to_log("devops_terminal_work_2_response", devops_terminal_work_2_response.text)
-
-    terminal = extract_blocks(
-        devops_terminal_work_2_response.text, "#TERMINAL_START", "#TERMINAL_END"
-    )
-    print("!3!3!3!3!3!!3!3!33!!3!33!33!33333!333!33!", terminal, "!!!!!!!!!!!")
-    term_comnd = "\n".join(terminal)
-    result_terminal = subprocess.run(term_comnd, shell=True)
     # DEVOPS
+    #проанализировать то, что происходит в текущей структуре
+
     # TODO записывал в текущие файлы
     devops_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in assembling complex projects from individual code contributions, ensuring seamless integration and functionality. You prioritize clarity, efficiency, and maintainability in your work.
 
     **Project Overview:**
 
-    - **Technical Assignment:** {analysis_response.text}
-    - **Task Distribution:** {teamlead_response.text}
-    - **Programmers' Code:** {programmers_responses_as_string}
-    - **Structure of current project:** {get_ls_r_output(f"tests/{folder_obj.folder_name}")}
+    - **Technical Assignment:**
+    {analysis_response.text}
+    
+    - **Task Distribution:**
+    {teamlead_response.text}
+    
+    - **Programmers' Code:**
+    {programmers_responses_as_string}
+    
+    - **File structure of current project:**
+    {get_ls_r_output(f"tests/{folder_obj.folder_name}")}
 
     **Your Task:**
 
-    1. **Code Integration:** Assemble all the code written by the programmers into a single, working project, following the technical assignment. Using the structure of the current project, перезаписать уже текущие файлы и добавить новые 
+    1. **Code Integration:** Assemble all the code written by the programmers into a single, working project, following the technical assignment. Using the structure of the current project, overwrite existing files and add new ones.
     2. **Error Detection & Correction:**  Carefully identify and address any potential errors, inconsistencies, or missing code within the project.
     3. **Library Management:** Ensure that all necessary libraries are included and properly connected within the project. 
-    4. **File Organization:**  Divide the project into well-structured files with appropriate names and extensions.  
+    4. **File Organization:**  Divide the project into well-structured files and folders with appropriate names and extensions.  
     5. **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
         - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the file with name `main` so that the project runs seamlessly.** 
     6. **Project Completion:**  Create a complete and functional project, ready for testing and deployment.
@@ -417,15 +413,15 @@ def solve_task(task_, bar, *args, **kwargs):
 
     **Output Structure:**
 
-    - **File Names:** Use the marker `PATH_START` to indicate the beginning of the path to this file with the name and `PATH_END` to indicate the end.  
+    - **File paths:** Use the marker `PATH_START` to indicate the beginning of the path to this file with the name and `PATH_END` to indicate the end.  
     - **File Content:**  Wrap each file's code within the markers `&FILE_START` and `&FILE_END`.
     - **Package List:**  Include the `&PACKAGES_START` and `&PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
+    - **Code Completion:** Write the entire code solution, ensuring it is complete, ready to run, and seamlessly integrates with the provided code, without missing pieces of code.
     - **Words with markers '&' are a mandatory part of the code**
-
 
     **Example:**
 
-    PATH_START game.py PATH_END
+    PATH_START logic\game.py PATH_END
 
     ```python
     &FILE_START
@@ -434,7 +430,7 @@ def solve_task(task_, bar, *args, **kwargs):
     ```
     
     
-    PATH_START index.html PATH_END
+    PATH_START sites\index.html PATH_END
     
     ```html
     &FILE_START
@@ -473,18 +469,30 @@ def solve_task(task_, bar, *args, **kwargs):
     )
 
     errors = multyfile_test_mistakes_with_gpt(files_as_string, bar)
+
     # TODO дописать промпт так чтоб он запихивал уже в текущие файлы и обращал на них внимание
     devops_debug_prompt = f"""
     You are a highly skilled and experienced DevOps engineer, known for your expertise in troubleshooting complex multi-file Python projects. You prioritize clarity, efficiency, and maintainability in your work.
 
     **Project Overview:**
 
-    - **Technical Assignment:** {analysis_response.text}
-    - **Task Distribution:** {teamlead_response.text}
-    - **Programmers' Code:** {programmers_responses_as_string}
-    - **Previous Code:** {files_as_string}
-    - **Error Log:** {errors}
-    - **Structure of project:** {get_ls_r_output(f"tests/{folder_obj.folder_name}")}
+    - **Technical Assignment:**
+    {analysis_response.text}
+    
+    - **Task Distribution:**
+    {teamlead_response.text}
+    
+    - **Programmers' Code:**
+    {programmers_responses_as_string}
+    
+    - **Previous Code:**
+    {files_as_string}
+    
+    - **Error Log:**
+    {errors}
+    
+    - **File structure of project:**
+    {get_ls_r_output(f"tests/{folder_obj.folder_name}")}
 
     **Your Task:**
 
@@ -495,17 +503,18 @@ def solve_task(task_, bar, *args, **kwargs):
     - **File Linking:**  Implement import statements to link files correctly, ensuring that all necessary code is accessible within the project.
     - **Crucially, ensure that all necessary functions, classes, and variables are properly imported into the `main` file so that the project runs seamlessly.** 
     In case of an error in the connection of the program files, rearrange everything so that it leads to correct operation
+    
     **Output:**
-
+    
     - **Corrected Code:** Provide the corrected version of the entire project code. Use the markers `&FILE_START` and `&FILE_END` to wrap each file's code.
-    - **File Names:** Use the marker `PATH_START` to indicate the beginning of the path to this file with the name and `PATH_END` to indicate the end. 
+    - **File paths:** Use the marker `PATH_START` to indicate the beginning of the path to this file with the name and `PATH_END` to indicate the end. 
     - **Words with markers '&' are a mandatory part of the code**
-    code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
+    - Code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
     - **Package List:**  Include the `&PACKAGES_START` and `&PACKAGES_END` markers followed by the space-separated list of package names at the end of the ouput
 
     **Example:**
 
-    PATH_START game.py PATH_END
+    PATH_START logic\game.py PATH_END
 
     ```python
     &FILE_START
@@ -514,7 +523,7 @@ def solve_task(task_, bar, *args, **kwargs):
     ```
     
     
-    PATH_START index.html PATH_END
+    PATH_START sites\index.html PATH_END
     
     ```html
     &FILE_START
