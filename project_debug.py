@@ -7,13 +7,11 @@ import io
 
 def test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
     debug_prompt = f"""
-        You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following Python code snippet and identifying all potential errors. 
+        You are a highly skilled and experienced senior multy-language debugger with a keen eye for detail. You are tasked with meticulously reviewing the following Python code snippet and identifying all potential errors. 
 
         **Code**
 
-        ```python
         {code_string}
-        ```
 
         Your goal is to find as many errors as possible, including but not limited to:
 
@@ -35,8 +33,8 @@ def test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
         3. Explanation:  A clear and detailed description of why the error occurs. Provide context and reasoning, and explain how the error could impact the code's functionality or security.
         4. Suggested Fix:  Provide a specific recommendation on how to fix the error and ensure the code behaves correctly, securely, and efficiently.
 
-        markers of beginning and ending of something are a mandatory part of the code
-        "```python" , "```" are a mandatory part of the code
+        - **Words with markers '&' are a mandatory part of the code** you can not delete them
+        - Code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
     """
     debug_response = model.generate_content(debug_prompt, stream=True)
     debug_response.resolve()
@@ -47,7 +45,7 @@ def test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
 
 def multyfile_test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
     debug_prompt = f"""
-        You are a highly skilled Python debugger with a keen eye for detail. You are tasked with meticulously reviewing the following multi-file Python project and identifying all potential errors. 
+        You are a highly skilled and experienced senior multy-language debugger with a keen eye for detail. You are tasked with meticulously reviewing the following multi-file and multy-language project and identifying all potential errors. 
 
         **Project Structure:**
 
@@ -59,7 +57,7 @@ def multyfile_test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
 
         **File 2: file2_name.py**
 
-        ```python
+        ```html
         file1_code
         ```
 
@@ -84,19 +82,19 @@ def multyfile_test_mistakes_with_gpt(code_string, bar, *args, **kwargs):
 
         **For each error you identify, provide a detailed explanation, including:**
 
-        **File Name:** The name of the file where the error occurs.
+        **File path:** The path of the file where the error occurs.
         **Line Number:** The specific line where the error occurs.
         **Error Type:** A concise description of the error (e.g., SyntaxError, TypeError, ValueError, Logical Error, Style Violation, Potential Bug, Import Error, etc.).
         **Explanation:** A clear and detailed description of why the error occurs. Provide context and reasoning, and explain how the error could impact the code's functionality or security.
         **Suggested Fix:** Provide a specific recommendation on how to fix the error and ensure the code behaves correctly, securely, and efficiently.
 
 
-        markers of beginning and ending of something are a mandatory part of the code
-        "```python" , "```" are a mandatory part of the code
+        - **Words with markers '&' are a mandatory part of the code** you can not delete them
+        - Code blocks "```python" , "```" or "```html" , "```", etc...  are a mandatory part of the code
 
         **Example:**
 
-        File: my_module.py
+        File: modules\my_module.py
         Error on line 10: NameError: name 'my_variable' is not defined
         Explanation: The variable my_variable is used in this file, but it's not defined within this file or imported from another file.
         Suggested Fix: Either define my_variable in this file or import it from the file where it is defined.
