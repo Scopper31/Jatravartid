@@ -19,3 +19,9 @@ def generate_alias(task, bar, *arg, **kwargs):
         return None
 
     return main_text
+
+#анализ по системе
+def analisys_of_project(path, bar):
+    prompt = ''
+    return model.generate_content(prompt, stream=True,)
+    pass
