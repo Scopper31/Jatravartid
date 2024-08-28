@@ -5,7 +5,8 @@ import subprocess
 from utilities import *
 from project_debug import *
 from config import folder_obj
-#from alive_progress import alive_bar
+
+# from alive_progress import alive_bar
 
 
 def solve_task(task_, bar, *args, **kwargs):
@@ -373,14 +374,14 @@ def solve_task(task_, bar, *args, **kwargs):
         devops_req_terminal_response.text, "&TERMINAL_START", "&TERMINAL_END"
     )
 
-    #print("!", terminal, "!")
-    term_comnd = f"cd tests\n cd {folder_obj.folder_name}\n" + terminal
-    result_terminal = subprocess.run(term_comnd, shell=True)
-    #result_terminal = result_terminal.stdout
+    # print("!", terminal, "!")
+    term_comnd = f"cd tests\n cd {folder_obj.folder_name}\n" + "\n".join(terminal)
 
+    result_terminal = subprocess.run(term_comnd, shell=True)
+    # result_terminal = result_terminal.stdout
 
     # DEVOPS
-    #проанализировать то, что происходит в текущей структуре
+    # проанализировать то, что происходит в текущей структуре
 
     # TODO записывал в текущие файлы
     devops_prompt = f"""

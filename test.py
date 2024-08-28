@@ -41,7 +41,12 @@
 #     "python3 -m venv env\nsource env/bin/activate\npip install -r requirements.txt\ndjango-admin startproject dating_api .\npython manage.py startapp users\npython manage.py startapp matching\npython manage.py startapp messaging\npython manage.py makemigrations\npython manage.py migrate\npython manage.py createsuperuser"
 # ]
 # subprocess.run(f"cd tests\n cd dating-api \n" + "\n".join(terminal), shell=True)
+from utilities import *
 
-from utilities import get_ls_r_output
+data = analisys_of_project(
+    "tests/restaurant-drf-api",
+    "найди мне в этом проекте имена всех app от django rest framework",
+)
 
-print(get_ls_r_output("tests/restaurant-drf-api"))
+print(data)
+add_to_log(data)
