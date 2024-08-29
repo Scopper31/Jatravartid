@@ -90,3 +90,17 @@ def add_to_debug(worker_type, response):
         print(f"Failed to write to debug file: {e}")
     except Exception as e:
         print(f"Unexpected error while debugging: {e}")
+
+
+def read_file(path):
+    file_data = ""
+    try:
+        with open(path, "r") as file:
+            file_data = file.read()
+    except OSError as e:
+        print(f"Failed to read to file {path} : {e}")
+        add_to_log("read_file", e)
+    except Exception as e:
+        print(f"Unexpected error while creating file {path}: {e}")
+        add_to_log("read_file", e)
+    return file_data

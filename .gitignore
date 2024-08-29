@@ -2,4 +2,4 @@ venv
 tests
 utilities/__pycache__
 __pycache__
-/test.py
+code/test.py
