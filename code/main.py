@@ -2,7 +2,7 @@
 # pip install google-generativeai
 # from alive_progress import alive_bar
 
-
+#adwadawd
 from solve import *
 from utilities import *
 from config import *
