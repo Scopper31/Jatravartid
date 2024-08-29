@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pip install google-generativeai
 # from alive_progress import alive_bar
-
+#qdaWDdaw
 #adwadawd
 from solve import *
 from utilities import *
