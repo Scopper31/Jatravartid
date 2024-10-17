@@ -4,18 +4,19 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
-# from ..code.solve import *
+from dotenv import load_dotenv
+load_dotenv()
+# from .code.solve import *
 # from utilities import *
 # from config import *
 # from correction import *
 
-# Токен бота (замените на свой токен)
-API_TOKEN = '6924602274:AAEQb80WfVXLicdGDB7qZjxK_WXy1JNHfxQ'
+
+   
 
 
 # Инициализация бота и диспетчера
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=os.environ.get("BOT_TOKEN"))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 # Класс состояний для создания нового проекта
